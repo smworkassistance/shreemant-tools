@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Shreemant PO Cross Check v8</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6f8;
+margin:20px;
+}
+
+h2{text-align:center;}
+
+.container{
+display:flex;
+gap:40px;
+justify-content:center;
+}
+
+.sheet{
+padding:10px;
+border-radius:6px;
+}
+
+.ordered{background:#eef4ff;}
+.received{background:#eefaf1;}
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:6px;
+min-width:120px;
+}
+
+td{background:white;}
+td[contenteditable]{outline:none;}
+
+.controls{
+text-align:center;
+margin-top:10px;
+}
+
+button{
+padding:8px 14px;
+margin:4px;
+border:none;
+border-radius:5px;
+background:#2d7ef7;
+color:white;
+cursor:pointer;
+}
+
+button.red{background:#e14b4b;}
+button.green{background:#2ca24c;}
+
+.report{
+margin-top:30px;
+padding:15px;
+background:white;
+border-radius:6px;
+max-width:1100px;
+margin-left:auto;
+margin-right:auto;
+}
+
+.searchbox{
+margin-bottom:10px;
+padding:6px;
+width:250px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Shreemant PO Cross Check</h2>
+
+<div class="container">
+
+<div class="sheet ordered">
+<h3>Ordered</h3>
+<table id="ordered">
+<tr><th>Item</th><th>MRP</th><th>Qty</th></tr>
+</table>
+
+<div class="controls">
+<button onclick="addRow('ordered')">Add Row</button>
+<button class="red" onclick="removeRow('ordered')">Remove Row</button>
+</div>
+</div>
+
+<div class="sheet received">
+<h3>Received</h3>
+<table id="received">
+<tr><th>Item</th><th>MRP</th><th>Qty</th></tr>
+</table>
+
+<div class="controls">
+<button onclick="addRow('received')">Add Row</button>
+<button class="red" onclick="removeRow('received')">Remove Row</button>
+</div>
+</div>
+
+</div>
+
+<div class="controls">
+<button class="green" onclick="runAnalysis()">Analyse</button>
+</div>
+
+<div id="report" class="report" style="display:none">
+
+<input id="searchBox" class="searchbox" placeholder="Search product..." onkeyup="filterTable()">
+
+<table id="analysisTable">
+<thead>
+<tr>
+<th>Product</th>
+<th>Ordered Qty</th>
+<th>Received Qty</th>
+<th>Difference</th>
+<th>Ordered MRP</th>
+<th>Received MRP</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</div>
+
+<script>
+
+const INITIAL_ROWS = 10
+
+function addRow(tableId){
+
+let table=document.getElementById(tableId)
+let tr=document.createElement("tr")
+
+for(let i=0;i<3;i++){
+
+let td=document.createElement("td")
+td.contentEditable=true
+td.addEventListener("paste",handlePaste)
+
+tr.appendChild(td)
+
+}
+
+table.appendChild(tr)
+
+}
+
+function removeRow(tableId){
+
+let table=document.getElementById(tableId)
+
+if(table.rows.length>2){
+table.deleteRow(table.rows.length-1)
+}
+
+}
+
+function init(){
+
+["ordered","received"].forEach(id=>{
+
+for(let i=0;i<INITIAL_ROWS;i++){
+addRow(id)
+}
+
+})
+
+}
+
+function handlePaste(e){
+
+e.preventDefault()
+
+let text=(e.clipboardData || window.clipboardData).getData("text")
+let rows=text.trim().split(/\r?\n/)
+
+let startCell=e.target
+let startRow=startCell.parentNode.rowIndex
+let startCol=startCell.cellIndex
+let table=startCell.closest("table")
+
+rows.forEach((rowText,i)=>{
+
+let cols=rowText.split("\t")
+let row=table.rows[startRow+i]
+
+if(!row) return
+
+cols.forEach((colText,j)=>{
+
+let col=startCol+j
+if(col<3){
+row.cells[col].innerText=colText
+}
+
+})
+
+})
+
+}
+
+function readTable(id){
+
+let table=document.getElementById(id)
+let data={}
+
+for(let i=1;i<table.rows.length;i++){
+
+let item=table.rows[i].cells[0].innerText.trim()
+let mrp=table.rows[i].cells[1].innerText.trim()
+let qty=parseFloat(table.rows[i].cells[2].innerText.trim())||0
+
+if(item){
+data[item]={mrp:mrp,qty:qty}
+}
+
+}
+
+return data
+
+}
+
+function runAnalysis(){
+
+let ordered=readTable("ordered")
+let received=readTable("received")
+
+let allProducts=new Set([...Object.keys(ordered),...Object.keys(received)])
+
+let tbody=document.querySelector("#analysisTable tbody")
+tbody.innerHTML=""
+
+allProducts.forEach(product=>{
+
+let o=ordered[product]||{qty:0,mrp:""}
+let r=received[product]||{qty:0,mrp:""}
+
+let diff=r.qty-o.qty
+
+let status="Perfect"
+
+if(!received[product]) status="Not Received"
+else if(!ordered[product]) status="Unordered Item"
+else if(diff>0) status="Extra +" + diff
+else if(diff<0) status="Short " + diff
+if(o.mrp && r.mrp && o.mrp!=r.mrp) status="MRP Changed"
+
+let row=`
+<tr>
+<td>${product}</td>
+<td>${o.qty}</td>
+<td>${r.qty}</td>
+<td>${diff}</td>
+<td>${o.mrp}</td>
+<td>${r.mrp}</td>
+<td>${status}</td>
+</tr>
+`
+
+tbody.innerHTML+=row
+
+})
+
+document.getElementById("report").style.display="block"
+
+}
+
+function filterTable(){
+
+let input=document.getElementById("searchBox").value.toLowerCase()
+let rows=document.querySelectorAll("#analysisTable tbody tr")
+
+rows.forEach(r=>{
+
+let text=r.innerText.toLowerCase()
+r.style.display=text.includes(input)?"":"none"
+
+})
+
+}
+
+init()
+
+</script>
+
+</body>
+</html>

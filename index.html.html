@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant Apana Bazar — Tools Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --saffron: #FF6B00;
+    --saffron-light: #FF8C33;
+    --saffron-pale: #FFF3E8;
+    --green: #1A7A4A;
+    --green-light: #22A05F;
+    --green-pale: #E8F7EF;
+    --cream: #FFFDF8;
+    --ink: #1C1C1C;
+    --muted: #6B6B6B;
+    --border: #E8E0D5;
+    --white: #FFFFFF;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-hover: 0 12px 40px rgba(255,107,0,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--white);
+    border-bottom: 3px solid var(--saffron);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-emblem {
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, var(--saffron), #FF3D00);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 22px;
+    color: white;
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .store-name {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .store-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .add-tool-btn {
+    background: var(--saffron);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .add-tool-btn:hover {
+    background: var(--saffron-light);
+    transform: translateY(-1px);
+  }
+
+  /* ── HERO STRIP ── */
+  .hero {
+    background: linear-gradient(135deg, var(--saffron) 0%, #FF3D00 50%, #D63000 100%);
+    padding: 40px 32px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .hero-title {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 28px;
+    color: white;
+    position: relative;
+  }
+
+  .hero-subtitle {
+    color: rgba(255,255,255,0.82);
+    font-size: 14px;
+    margin-top: 6px;
+    position: relative;
+  }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  /* ── CATEGORY LABEL ── */
+  .category-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    margin-top: 36px;
+  }
+
+  .category-label:first-of-type {
+    margin-top: 0;
+  }
+
+  .category-label h2 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .category-label .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── TOOLS GRID ── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  /* ── TOOL CARD ── */
+  .tool-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: grab;
+    transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+    position: relative;
+    user-select: none;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tool-card:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: var(--saffron);
+    transform: translateY(-3px);
+  }
+
+  .tool-card.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+  }
+
+  .tool-card.drag-over {
+    border-color: var(--green);
+    background: var(--green-pale);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .card-menu-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    font-size: 18px;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .card-menu-btn:hover {
+    background: var(--saffron-pale);
+    color: var(--saffron);
+  }
+
+  .card-name {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 18px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .open-btn {
+    background: var(--saffron);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .open-btn:hover {
+    background: var(--saffron-light);
+    transform: scale(1.04);
+  }
+
+  .drag-hint {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3px;
+  }
+
+  .drag-hint span {
+    width: 4px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 50%;
+    display: block;
+  }
+
+  /* ── CONTEXT MENU ── */
+  .ctx-menu {
+    position: fixed;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+    z-index: 999;
+    min-width: 160px;
+    padding: 6px 0;
+    display: none;
+  }
+
+  .ctx-menu.show { display: block; }
+
+  .ctx-item {
+    padding: 9px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    transition: background 0.12s;
+  }
+
+  .ctx-item:hover { background: var(--saffron-pale); color: var(--saffron); }
+  .ctx-item.danger { color: #c0392b; }
+  .ctx-item.danger:hover { background: #ffeaea; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 32px;
+    width: 90%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.93) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal h3 {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    font-size: 20px;
+    margin-bottom: 22px;
+    color: var(--ink);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: var(--saffron);
+  }
+
+  .form-group textarea { resize: vertical; min-height: 72px; }
+
+  .icon-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .icon-opt {
+    width: 38px;
+    height: 38px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .icon-opt:hover, .icon-opt.selected {
+    border-color: var(--saffron);
+    background: var(--saffron-pale);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: border-color 0.2s;
+  }
+
+  .btn-cancel:hover { border-color: var(--saffron); color: var(--saffron); }
+
+  .btn-save {
+    background: var(--saffron);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 22px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-save:hover { background: var(--saffron-light); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 2000;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 0 16px; height: 62px; }
+    .store-name { font-size: 17px; }
+    main { padding: 24px 14px 48px; }
+    .hero { padding: 28px 16px 24px; }
+    .hero-title { font-size: 22px; }
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-area">
+    <div class="logo-emblem">श</div>
+    <div class="logo-text">
+      <span class="store-name">Shreemant Apana Bazar</span>
+      <span class="store-subtitle">Tools Hub</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="add-tool-btn" onclick="openAddModal()">＋ Add Tool</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-title">All Your Business Tools, One Place</div>
+  <div class="hero-subtitle">Click any tool to open it • Drag cards to reorder • Click ⋮ to edit</div>
+</div>
+
+<!-- MAIN -->
+<main id="mainContent">
+  <!-- Cards injected by JS -->
+</main>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxEdit()">✏️ Edit</div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑️ Delete</div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Add New Tool</h3>
+    <div class="form-group">
+      <label>Tool Name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Stock Checker">
+    </div>
+    <div class="form-group">
+      <label>Short Description</label>
+      <textarea id="inp-desc" placeholder="What does this tool do?"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Link / URL</label>
+      <input type="text" id="inp-url" placeholder="https://... or relative path">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="inp-cat">
+        <option value="Purchase">Purchase</option>
+        <option value="PO Management">PO Management</option>
+        <option value="Reconciliation">Reconciliation</option>
+        <option value="Reports">Reports</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Icon</label>
+      <div class="icon-picker" id="iconPicker"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveModal()">Save Tool</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const ICONS = ['📦','🧾','🔁','📊','🛒','📋','🔍','💰','📈','🗂️','🏷️','✅','⚙️','📤','📥'];
+
+const CATEGORY_COLORS = {
+  'Purchase':       { bg: '#FFF3E8', text: '#FF6B00' },
+  'PO Management':  { bg: '#E8F7EF', text: '#1A7A4A' },
+  'Reconciliation': { bg: '#EEF4FF', text: '#2d5be3' },
+  'Reports':        { bg: '#F5F0FF', text: '#6B3FA0' },
+  'Other':          { bg: '#F5F5F5', text: '#555' },
+};
+
+const DEFAULT_TOOLS = [
+  {
+    id: 1,
+    name: 'PO Cross Check',
+    desc: 'Compare ordered vs received items. Spots quantity differences, MRP changes & unordered stock instantly.',
+    url: 'shreemant_po_cross_check_v8.html',
+    icon: '🔍',
+    category: 'PO Management',
+  },
+  {
+    id: 2,
+    name: 'Purchase File Builder',
+    desc: 'Build purchase files with packing lists, daily items, complete files & suspense entries all in one place.',
+    url: 'purchase_file_builder_v15__with_packing_file__daily_items__complete_file__suspense_file_.html',
+    icon: '📦',
+    category: 'Purchase',
+  },
+  {
+    id: 3,
+    name: 'PO Builder',
+    desc: 'Create and manage purchase orders quickly. Generate clean PO documents ready to send.',
+    url: 'Shreemant_PO_Builder_v4.html',
+    icon: '🧾',
+    category: 'Purchase',
+  },
+  {
+    id: 4,
+    name: 'MRP Reconciliation',
+    desc: 'Reconcile MRP stock data across systems. Identify discrepancies and keep records accurate.',
+    url: 'MRP_Reconciliation_Tool_v6.html',
+    icon: '🔁',
+    category: 'Reconciliation',
+  },
+];
+
+let tools = [];
+let nextId = 100;
+let ctxTargetId = null;
+let editingId = null;
+let selectedIcon = ICONS[0];
+let dragSrcId = null;
+
+// ─── STORAGE ────────────────────────────────────────────────────────────────
+
+function save() {
+  try { localStorage.setItem('sab_tools', JSON.stringify(tools)); } catch(e){}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('sab_tools');
+    if (raw) { tools = JSON.parse(raw); nextId = Math.max(...tools.map(t=>t.id), 99) + 1; }
+    else { tools = DEFAULT_TOOLS.map(t=>({...t})); save(); }
+  } catch(e) { tools = DEFAULT_TOOLS.map(t=>({...t})); }
+}
+
+// ─── RENDER ─────────────────────────────────────────────────────────────────
+
+function groupByCategory(arr) {
+  // Fixed display order
+  const ORDER = ['PO Management','Purchase','Reconciliation','Reports','Other'];
+  const map = {};
+  arr.forEach(t => {
+    const c = t.category || 'Other';
+    if (!map[c]) map[c] = [];
+    map[c].push(t);
+  });
+  const result = [];
+  ORDER.forEach(c => { if (map[c]) result.push([c, map[c]]); });
+  Object.keys(map).forEach(c => { if (!ORDER.includes(c)) result.push([c, map[c]]); });
+  return result;
+}
+
+function renderAll() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+
+  const groups = groupByCategory(tools);
+
+  if (groups.length === 0) {
+    main.innerHTML = `<div class="empty-state"><div class="emoji">🛠️</div><p>No tools yet. Click <strong>+ Add Tool</strong> to get started.</p></div>`;
+    return;
+  }
+
+  groups.forEach(([cat, items], gi) => {
+    const label = document.createElement('div');
+    label.className = 'category-label';
+    label.innerHTML = `<div class="line"></div><h2>${cat}</h2><div class="line"></div>`;
+    main.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'tools-grid';
+    grid.dataset.category = cat;
+
+    items.forEach((tool, i) => {
+      const card = makeCard(tool, (gi * 10 + i) * 0.06);
+      grid.appendChild(card);
+    });
+
+    main.appendChild(grid);
+  });
+}
+
+function makeCard(tool, delay) {
+  const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Other'];
+  const card = document.createElement('div');
+  card.className = 'tool-card';
+  card.dataset.id = tool.id;
+  card.style.animationDelay = delay + 's';
+  card.draggable = true;
+
+  card.innerHTML = `
+    <div class="drag-hint"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="card-top">
+      <div class="card-icon" style="background:${colors.bg}">${tool.icon || '🛠️'}</div>
+      <button class="card-menu-btn" title="Options">⋮</button>
+    </div>
+    <div class="card-name">${tool.name}</div>
+    <div class="card-desc">${tool.desc}</div>
+    <div class="card-footer">
+      <span class="card-tag" style="background:${colors.bg};color:${colors.text}">${tool.category}</span>
+      <a class="open-btn" href="${tool.url}" target="_blank">Open →</a>
+    </div>
+  `;
+
+  // Menu button
+  card.querySelector('.card-menu-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    showCtxMenu(e, tool.id);
+  });
+
+  // Drag
+  card.addEventListener('dragstart', e => {
+    dragSrcId = tool.id;
+    setTimeout(() => card.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('drag-over'));
+  });
+  card.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('drag-over'));
+    card.classList.add('drag-over');
+  });
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    card.classList.remove('drag-over');
+    if (dragSrcId === tool.id) return;
+    const srcIdx = tools.findIndex(t => t.id === dragSrcId);
+    const dstIdx = tools.findIndex(t => t.id === tool.id);
+    if (srcIdx < 0 || dstIdx < 0) return;
+    const [removed] = tools.splice(srcIdx, 1);
+    tools.splice(dstIdx, 0, removed);
+    save();
+    renderAll();
+    showToast('Order updated ✓');
+  });
+
+  return card;
+}
+
+// ─── CONTEXT MENU ────────────────────────────────────────────────────────────
+
+function showCtxMenu(e, id) {
+  ctxTargetId = id;
+  const menu = document.getElementById('ctxMenu');
+  menu.classList.add('show');
+  const x = Math.min(e.clientX, window.innerWidth - 180);
+  const y = Math.min(e.clientY, window.innerHeight - 100);
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('ctxMenu').classList.remove('show');
+});
+
+function ctxEdit() {
+  const tool = tools.find(t => t.id === ctxTargetId);
+  if (!tool) return;
+  openEditModal(tool);
+}
+
+function ctxDelete() {
+  if (!confirm('Delete this tool?')) return;
+  tools = tools.filter(t => t.id !== ctxTargetId);
+  save();
+  renderAll();
+  showToast('Tool removed');
+}
+
+// ─── MODAL ──────────────────────────────────────────────────────────────────
+
+function buildIconPicker(current) {
+  const picker = document.getElementById('iconPicker');
+  picker.innerHTML = '';
+  selectedIcon = current || ICONS[0];
+  ICONS.forEach(ic => {
+    const el = document.createElement('div');
+    el.className = 'icon-opt' + (ic === selectedIcon ? ' selected' : '');
+    el.textContent = ic;
+    el.onclick = () => {
+      selectedIcon = ic;
+      document.querySelectorAll('.icon-opt').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+    picker.appendChild(el);
+  });
+}
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Add New Tool';
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-url').value = '';
+  document.getElementById('inp-cat').value = 'Purchase';
+  buildIconPicker('📦');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function openEditModal(tool) {
+  editingId = tool.id;
+  document.getElementById('modalTitle').textContent = 'Edit Tool';
+  document.getElementById('inp-name').value = tool.name;
+  document.getElementById('inp-desc').value = tool.desc;
+  document.getElementById('inp-url').value = tool.url;
+  document.getElementById('inp-cat').value = tool.category || 'Other';
+  buildIconPicker(tool.icon);
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function saveModal() {
+  const name = document.getElementById('inp-name').value.trim();
+  const desc = document.getElementById('inp-desc').value.trim();
+  const url  = document.getElementById('inp-url').value.trim();
+  const cat  = document.getElementById('inp-cat').value;
+
+  if (!name || !url) { alert('Please fill in at least the tool name and link.'); return; }
+
+  if (editingId !== null) {
+    const tool = tools.find(t => t.id === editingId);
+    if (tool) { tool.name = name; tool.desc = desc; tool.url = url; tool.category = cat; tool.icon = selectedIcon; }
+  } else {
+    tools.push({ id: nextId++, name, desc, url, category: cat, icon: selectedIcon });
+  }
+
+  save();
+  renderAll();
+  closeModal();
+  showToast(editingId !== null ? 'Tool updated ✓' : 'Tool added ✓');
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────────────────
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+
+load();
+renderAll();
+</script>
+</body>
+</html>

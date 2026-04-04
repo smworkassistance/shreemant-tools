@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MRP Stock Reconciliation — Shreemant</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap');
+
+  :root {
+    --bg: #f0ede8;
+    --surface: #faf9f7;
+    --border: #ddd9d2;
+    --text: #1a1816;
+    --muted: #7a7570;
+    --accent: #b5451b;
+    --accent2: #2d6a4f;
+    --warn: #c57c1a;
+    --full: #2d6a4f;
+    --partial: #c57c1a;
+    --flag: #b5451b;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Fraunces', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; min-height: 100vh; }
+
+  header {
+    background: var(--text); color: var(--bg);
+    padding: 18px 32px; display: flex; align-items: baseline; gap: 16px;
+  }
+  header h1 { font-family: var(--serif); font-size: 20px; font-weight: 300; }
+  header span { font-size: 10px; color: #9a9590; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .main { padding: 28px 32px; max-width: 1700px; margin: 0 auto; }
+
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 8px;
+    padding: 44px 32px; text-align: center; background: var(--surface);
+    cursor: pointer; transition: all 0.2s; margin-bottom: 20px;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: #fdf6f4; }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 10px; }
+  .upload-zone h2 { font-family: var(--serif); font-size: 17px; font-weight: 300; margin-bottom: 6px; }
+  .upload-zone p { color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+  .files-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .file-chip {
+    background: var(--text); color: var(--bg);
+    padding: 5px 12px; border-radius: 4px; font-size: 11px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .file-chip button { background: none; border: none; color: #9a9590; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+
+  .btn {
+    background: var(--accent); color: white; border: none;
+    padding: 10px 24px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+    border-radius: 4px; transition: opacity 0.2s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-green { background: var(--full); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--surface); opacity: 1; }
+
+  .top-bar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 16px;
+  }
+  .top-bar-label { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4,1fr);
+    gap: 10px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 18px;
+  }
+  .stat-card .num { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1; margin-bottom: 3px; }
+  .stat-card .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-card.green .num { color: var(--full); }
+  .stat-card.orange .num { color: var(--partial); }
+  .stat-card.red .num { color: var(--flag); }
+
+  .mc-tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .mc-tab {
+    padding: 5px 14px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    font-family: var(--mono); font-size: 11px; transition: all 0.15s;
+  }
+  .mc-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-bar input {
+    padding: 7px 12px; border: 1px solid var(--border); border-radius: 4px;
+    font-family: var(--mono); font-size: 12px; background: var(--surface);
+    color: var(--text); outline: none; width: 240px;
+  }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 4px; border: 1px solid var(--border);
+    background: var(--surface); font-family: var(--mono); font-size: 11px;
+    cursor: pointer; transition: all 0.15s; color: var(--text);
+  }
+  .filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+    font-size: 11.5px;
+  }
+  th {
+    background: #1a1816; color: #f0ede8;
+    padding: 9px 11px; text-align: left;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+    white-space: nowrap; font-weight: 500;
+  }
+  td { padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f5f2ee; }
+  .item-name { font-weight: 500; max-width: 220px; word-break: break-word; }
+  .mrp-consume { color: #7a3010; font-weight: 500; }
+  .mrp-generate { color: var(--accent2); font-weight: 500; }
+  .sp-val { color: var(--muted); }
+  .qty-consume { color: #7a3010; font-weight: 600; }
+  .qty-generate { color: var(--full); font-weight: 600; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; letter-spacing: 0.04em; font-weight: 500; white-space: nowrap; }
+  .badge-full    { background: #d4edda; color: #1a5c35; }
+  .badge-partial { background: #fff3cd; color: #7a4f00; }
+  .badge-flag    { background: #fde8e4; color: #8b2500; }
+
+  .progress {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px;
+  }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.8s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #controls { display: none; }
+  #results-section { display: none; }
+
+  .sub-row td:first-child { color: #bbb; padding-left: 22px; font-size: 10px; }
+
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MRP Stock Reconciliation</h1>
+  <span>Shreemant Apna Bazar · Year-End Stock Correction Tool</span>
+</header>
+
+<div class="main">
+
+  <!-- Upload Section -->
+  <div id="upload-section">
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📂</div>
+      <h2>Upload MRP-wise Stock CSV Files</h2>
+      <p>Drag and drop one or multiple Material Center CSV files, or click to browse<br>
+        Busy → Display → MRP Wise Report → MRP Closing Status → Balance Only → Export CSV</p>
+      <input type="file" id="fileInput" accept=".csv" multiple>
+    </div>
+    <div class="files-list" id="filesList"></div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <button class="btn" id="processBtn" disabled onclick="processAll()">▶ Process &amp; Reconcile</button>
+      <span style="color:var(--muted); font-size:11px;" id="fileCount"></span>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div id="progressDiv" style="display:none;" class="progress">
+    <div class="spinner"></div>
+    <span id="progressMsg">Processing...</span>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <div class="stats" id="statsBar"></div>
+
+    <!-- Download + Reset at TOP -->
+    <div class="top-bar">
+      <button class="btn btn-green" onclick="downloadExcel()">⬇ Download Excel Output</button>
+      <button class="btn btn-outline" onclick="resetTool()">↺ Upload New Files</button>
+      <span class="top-bar-label" id="rowCount"></span>
+    </div>
+
+    <div class="mc-tabs" id="mcTabs"></div>
+
+    <div class="filter-bar">
+      <input type="text" id="searchBox" placeholder="Search item name..." oninput="renderTable()">
+      <button class="filter-btn active" id="f-all"     onclick="setFilter('all')">All</button>
+      <button class="filter-btn"        id="f-full"    onclick="setFilter('full')">⚡ Ready</button>
+      <button class="filter-btn"        id="f-partial" onclick="setFilter('partial')">⚠️ Partial</button>
+      <button class="filter-btn"        id="f-flag"    onclick="setFilter('flag')">🚩 Flagged</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-section">
+    <div class="table-wrap">
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="min-width:200px">Item Name</th>
+            <th colspan="3" style="background:#3a1a0a; text-align:center; border-left:2px solid #555">
+              CONSUME &nbsp;(Remove Positive Stock)
+            </th>
+            <th colspan="3" style="background:#0a2a1a; text-align:center; border-left:2px solid #555">
+              GENERATE &nbsp;(Fix Negative Stock)
+            </th>
+            <th colspan="3" style="background:#2a0a0a; text-align:center; border-left:2px solid #555">
+              UNRESOLVED &nbsp;(Remaining)
+            </th>
+            <th rowspan="2">Status</th>
+          </tr>
+          <tr>
+            <th style="background:#3a1a0a; border-left:2px solid #555">MRP</th>
+            <th style="background:#3a1a0a">Sale Price</th>
+            <th style="background:#3a1a0a">Qty</th>
+            <th style="background:#0a2a1a; border-left:2px solid #555">MRP</th>
+            <th style="background:#0a2a1a">Sale Price</th>
+            <th style="background:#0a2a1a">Qty</th>
+            <th style="background:#2a0a0a; border-left:2px solid #555">MRP</th>
+            <th style="background:#2a0a0a">Sale Price</th>
+            <th style="background:#2a0a0a">Qty</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== STATE =====
+let allResults = {};
+let currentMC  = '';
+let currentFilter = 'all';
+let uploadedFiles = [];
+
+// ===== FILE HANDLING =====
+const dropzone  = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag'); handleFiles([...e.dataTransfer.files]); });
+fileInput.addEventListener('change', e => handleFiles([...e.target.files]));
+
+function handleFiles(files) {
+  files.forEach(f => {
+    if (!f.name.toLowerCase().endsWith('.csv')) return;
+    if (uploadedFiles.find(x => x.name === f.name)) return;
+    uploadedFiles.push(f);
+  });
+  renderFileChips();
+}
+function renderFileChips() {
+  document.getElementById('filesList').innerHTML = uploadedFiles.map((f,i) =>
+    `<div class="file-chip">📄 ${f.name}<button onclick="removeFile(${i})">×</button></div>`
+  ).join('');
+  document.getElementById('processBtn').disabled = uploadedFiles.length === 0;
+  document.getElementById('fileCount').textContent = uploadedFiles.length
+    ? `${uploadedFiles.length} file${uploadedFiles.length>1?'s':''} selected` : '';
+}
+function removeFile(i) { uploadedFiles.splice(i,1); renderFileChips(); }
+
+// ===== PARSING =====
+function parseNum(s) {
+  return parseFloat(String(s||0).replace(/,/g,'').trim()) || 0;
+}
+function parseCSVLine(line) {
+  const result=[]; let cur='', inq=false;
+  for (const c of line) {
+    if (c==='"') { inq=!inq; continue; }
+    if (c===',' && !inq) { result.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  result.push(cur);
+  return result;
+}
+function parseMCName(filename) {
+  return filename.replace(/\.csv$/i,'').replace(/^MRP[_\s]*/i,'').replace(/_\d+$/,'') || filename;
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const rows = [];
+  let current = null, startIdx = 0;
+
+  for (let i=0; i<Math.min(10,lines.length); i++) {
+    if (/item detail|item name/i.test(lines[i])) { startIdx=i+1; break; }
+  }
+
+  for (let i=startIdx; i<lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || /^,,Total/i.test(line)) continue;
+    const cols = parseCSVLine(line);
+    if (cols.length < 4) continue;
+    const itemField = cols[0].replace(/^"|"$/g,'').trim();
+    const mrp = parseNum(cols[1]);
+    const sp  = parseNum(cols[2]);
+    const qty = parseNum(cols[3]);
+    if (itemField) current = itemField;
+    if (!current) continue;
+    rows.push({ item: current, mrp, sp, qty });
+  }
+  return rows;
+}
+
+/*
+=============================================================================
+  MRP-WISE STOCK RECONCILIATION TOOL
+  Shreemant Apna Bazar — Year-End Stock Correction
+=============================================================================
+
+  PURPOSE:
+  In Busy Accounting Software, items are tracked MRP-wise and Sale Price-wise.
+  When internal transfers or vouchers are entered against a wrong MRP/SP, the
+  net stock quantity remains correct but MRP-wise stock gets corrupted — some
+  MRPs go negative, others go positive. At financial year-end, Busy does not
+  carry forward negative MRP stock, causing phantom stock in the new year.
+  This tool identifies these mismatches and generates a correction list
+  (Stock Journal entries: Consume + Generate) to clean up before year-end.
+
+=============================================================================
+  CORE LOGIC — RECONCILIATION RULES
+=============================================================================
+
+  DEFINITIONS:
+  - CONSUME  : The positive-stock MRP entry that needs to be reduced to zero.
+  - GENERATE : The negative-stock MRP entry that needs to be brought to zero.
+  - Ghost Entry : Any entry where SP = 0 OR MRP = 0. These are invalid entries
+                  that do not represent real stock in the physical world.
+
+  RULE 1 — PERFECT MATCH FIRST:
+  Before any partial matching, scan for items where a negative MRP entry has
+  an exactly equal positive MRP entry (same absolute quantity). These are
+  locked as pairs first. This prevents breaking clean pairs by partial matching.
+
+  RULE 2 — SMALL NEGATIVES RESOLVED FIRST:
+  Among remaining unmatched negatives, smaller quantities are resolved first.
+  This maximises the number of items fully cleaned, leaving fewer partial cases.
+
+  RULE 3 — CONSUMPTION PRIORITY ORDER:
+  When choosing which positive-stock entry to consume, the following priority
+  applies (lower number = consumed first):
+
+    Priority 1 — Ghost entries (SP = 0 OR MRP = 0)
+                 These are invalid/ghost entries. They should be consumed and
+                 cleared before touching any real stock entry.
+
+    Priority 2 — MRP == Sale Price entries
+                 Items where no margin is configured (cost = selling price).
+                 Suspicious entries — consume before properly priced stock.
+
+    Priority 3 — Real priced stock (MRP > SP > 0), Same MRP only: Lower SP consumed first
+                 This rule applies ONLY when comparing entries with the same MRP.
+                 Among same-MRP entries, the lowest Sale Price is consumed first,
+                 preserving the higher-margin entry for actual sale and more profit.
+                 Entries with different MRPs are not SP-compared against each other.
+
+  RULE 4 — PARTIAL MATCHING:
+  If available positive stock cannot fully cover all negative entries:
+  - Match as much as possible (partial correction).
+  - Flag the remaining unresolved negative quantity separately.
+  - The tool still generates a correction entry for the resolved portion.
+
+  RULE 5 — GENERATE SIDE (NO RESTRICTIONS):
+  There is no special logic applied to the Generate side. If a negative entry
+  exists — whether ghost or real — it must be generated (fixed) regardless.
+  The only goal on the Generate side is to bring negative stock to zero.
+
+  RULE 6 — MC-WISE ONLY (NO CROSS-MC TRANSFERS):
+  Each Material Center's CSV is processed independently. Corrections are
+  always within the same MC. Cross-MC stock issues require a separate
+  Stock Transfer entry in Busy and are flagged manually by the user.
+
+=============================================================================
+  STATUS LABELS
+=============================================================================
+
+  ⚡ Ready    — All negative MRP entries fully resolved. Stock Journal entry
+                can be entered in Busy as-is.
+
+  ⚠️ Partial  — Negative entries partially resolved. Some correction is
+                possible; remaining unresolved qty is shown in Unresolved
+                columns and must be investigated manually.
+
+  🚩 Flagged  — No positive counterpart available. Entire negative qty is
+                unresolved. Manual investigation required in Busy.
+
+=============================================================================
+  HOW TO USE THE OUTPUT IN BUSY
+=============================================================================
+
+  1. Open Busy → Transactions → Stock Journal → Add
+  2. Select the Material Center
+  3. In CONSUME section: enter item, MRP, Sale Price, Qty (from Consume cols)
+  4. In GENERATE section: enter item, MRP, Sale Price, Qty (from Generate cols)
+  5. Save the voucher
+  6. Repeat for each row in the output (one voucher per item recommended)
+  7. For Flagged/Partial items: investigate in Busy before entering manually
+
+=============================================================================
+*/
+
+// ===== RECONCILIATION =====
+// CONSUME = positive stock entries (reduce them)
+// GENERATE = negative stock entries (fix them, bring to 0)
+// SP=0 check: only flag if negative entry (GENERATE side) has SP=0 with no alternative
+function reconcile(rows) {
+  const byItem = {};
+  rows.forEach(r => { (byItem[r.item] = byItem[r.item]||[]).push({...r}); });
+
+  const results = [];
+
+  for (const [itemName, list] of Object.entries(byItem)) {
+    const negs = list.filter(r => r.qty < 0);   // need to GENERATE (fix negative)
+    const pos  = list.filter(r => r.qty > 0);   // need to CONSUME (reduce positive)
+
+    if (!negs.length) continue;
+
+    // Mutable pools
+    const negPool = {}; negs.forEach((r,i)=>{ r._i=i; negPool[i]=Math.abs(r.qty); });
+    const posPool = {}; pos.forEach((r,i)=>{ r._i=i; posPool[i]=r.qty; });
+
+    const corrections = [];
+    const matchedNeg = new Set();
+    const matchedPos = new Set();
+
+    // RULE: Perfect match first (same absolute qty)
+    // CONSUME: positive entry (no SP restriction)
+    // GENERATE: negative entry (prefer SP > 0)
+    for (const nr of negs) {
+      for (const pr of pos) {
+        if (matchedPos.has(pr._i) || matchedNeg.has(nr._i)) continue;
+        if (negPool[nr._i] === posPool[pr._i]) {
+          corrections.push({
+            // CONSUME = positive
+            con_mrp: pr.mrp, con_sp: pr.sp, con_qty: posPool[pr._i],
+            // GENERATE = negative
+            gen_mrp: nr.mrp, gen_sp: nr.sp, gen_qty: negPool[nr._i],
+            type: 'full'
+          });
+          matchedNeg.add(nr._i);
+          matchedPos.add(pr._i);
+          negPool[nr._i] = 0;
+          posPool[pr._i] = 0;
+        }
+      }
+    }
+
+    // Remaining: sort negatives small-first
+    const remNeg = negs
+      .filter(r => !matchedNeg.has(r._i) && negPool[r._i] > 0)
+      .sort((a,b) => negPool[a._i] - negPool[b._i]);
+
+    // CONSUME pool priority order:
+    // 1. Ghost entries (SP=0 or MRP=0) — invalid, clear first
+    // 2. MRP == SP — no margin configured, suspicious entry, consume next
+    // 3. Real priced stock — lower SP consumed first, preserving higher-margin stock for selling
+    const remPos = pos
+      .filter(r => !matchedPos.has(r._i) && posPool[r._i] > 0)
+      .sort((a,b) => {
+        const rank = r => {
+          if (r.sp === 0 || r.mrp === 0) return 0;
+          if (r.mrp === r.sp) return 1;
+          return 2;
+        };
+        const ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        if (a.mrp === b.mrp) return a.sp - b.sp; // same MRP only: lower SP consumed first
+        return 0; // different MRP: no SP-based ordering
+      });
+
+    const posPoolMut = {};
+    remPos.forEach(r => posPoolMut[r._i] = posPool[r._i]);
+
+    for (const nr of remNeg) {
+      let need = negPool[nr._i];
+      if (need === 0) continue;
+
+      const origNeed = Math.abs(nr.qty);
+      for (const pr of remPos) {
+        if ((posPoolMut[pr._i]||0) <= 0) continue;
+        const use = Math.min(need, posPoolMut[pr._i]);
+        corrections.push({
+          con_mrp: pr.mrp, con_sp: pr.sp, con_qty: use,
+          gen_mrp: nr.mrp, gen_sp: nr.sp, gen_qty: use,
+          type: use >= origNeed ? 'full' : 'partial'
+        });
+        posPoolMut[pr._i] -= use;
+        need -= use;
+        negPool[nr._i] = need;
+        if (need <= 0) break;
+      }
+    }
+
+    // Unresolved negatives
+    const unresolved = negs
+      .filter(r => !matchedNeg.has(r._i) && negPool[r._i] > 0)
+      .map(r => ({ mrp: r.mrp, sp: r.sp, qty: negPool[r._i] }));
+
+    let status = 'full';
+    if (unresolved.length > 0 && corrections.length === 0) status = 'flag';
+    else if (unresolved.length > 0) status = 'partial';
+
+    results.push({ item: itemName, corrections, unresolved, status });
+  }
+
+  return results;
+}
+
+// ===== PROCESS ALL =====
+async function processAll() {
+  document.getElementById('progressDiv').style.display = 'flex';
+  document.getElementById('processBtn').disabled = true;
+  allResults = {};
+  await sleep(30);
+
+  for (const file of uploadedFiles) {
+    const mc = parseMCName(file.name);
+    document.getElementById('progressMsg').textContent = `Processing: ${file.name}`;
+    await sleep(10);
+    const text = await readFile(file);
+    const rows = parseCSV(text);
+    allResults[mc] = reconcile(rows);
+  }
+
+  document.getElementById('progressDiv').style.display = 'none';
+  currentMC = Object.keys(allResults)[0];
+  currentFilter = 'all';
+
+  renderMCTabs(); renderStats(); renderTable();
+  document.getElementById('controls').style.display = 'block';
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('upload-section').style.display = 'none';
+}
+
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+function readFile(f) {
+  return new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.readAsText(f, 'utf-8');
+  });
+}
+
+// ===== UI =====
+function renderMCTabs() {
+  document.getElementById('mcTabs').innerHTML = Object.keys(allResults).map(mc =>
+    `<div class="mc-tab ${mc===currentMC?'active':''}" onclick="switchMC('${mc}')">${mc}</div>`
+  ).join('');
+}
+function switchMC(mc) {
+  currentMC=mc; currentFilter='all';
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('f-all').classList.add('active');
+  renderMCTabs(); renderStats(); renderTable();
+}
+
+function renderStats() {
+  const r = allResults[currentMC]||[];
+  const total=r.length, full=r.filter(x=>x.status==='full').length,
+        partial=r.filter(x=>x.status==='partial').length, flag=r.filter(x=>x.status==='flag').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="num">${total}</div><div class="label">Total Items with Issues</div></div>
+    <div class="stat-card green"><div class="num">${full}</div><div class="label">⚡ Ready to Fix</div></div>
+    <div class="stat-card orange"><div class="num">${partial}</div><div class="label">⚠️ Partial Match</div></div>
+    <div class="stat-card red"><div class="num">${flag}</div><div class="label">🚩 Flagged</div></div>
+  `;
+}
+
+function setFilter(f) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const results = allResults[currentMC]||[];
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  let filtered = results;
+  if (currentFilter!=='all') filtered=filtered.filter(r=>r.status===currentFilter);
+  if (search) filtered=filtered.filter(r=>r.item.toLowerCase().includes(search));
+
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('rowCount').textContent = `${filtered.length} items`;
+
+  if (!filtered.length) {
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No items found</td></tr>`;
+    return;
+  }
+
+  let html='';
+  for (const r of filtered) {
+    const rows = r.corrections.length === 0
+      ? [{ isFirst:true, isSub:false,
+           con_mrp:'', con_sp:'', con_qty:'',
+           gen_mrp:'', gen_sp:'', gen_qty:'',
+           unres: r.unresolved[0]||null, showStatus:true }]
+      : r.corrections.map((c,ci) => ({
+          isFirst: ci===0, isSub: ci>0,
+          con_mrp:c.con_mrp, con_sp:c.con_sp, con_qty:c.con_qty,
+          gen_mrp:c.gen_mrp, gen_sp:c.gen_sp, gen_qty:c.gen_qty,
+          unres: (ci===r.corrections.length-1 && r.unresolved.length) ? r.unresolved[0] : null,
+          showStatus: ci===0
+        }));
+
+    rows.forEach(row => {
+      html+=`<tr>
+        <td class="item-name">${row.isFirst ? esc(r.item) : '<span style="color:#ccc;font-size:10px">↳</span>'}</td>
+        <td class="mrp-consume">${row.con_mrp!=='' ? '₹'+row.con_mrp : ''}</td>
+        <td class="sp-val">${row.con_sp!=='' ? row.con_sp : ''}</td>
+        <td class="qty-consume">${row.con_qty!=='' ? row.con_qty : ''}</td>
+        <td class="mrp-generate">${row.gen_mrp!=='' ? '₹'+row.gen_mrp : ''}</td>
+        <td class="sp-val">${row.gen_sp!=='' ? row.gen_sp : ''}</td>
+        <td class="qty-generate">${row.gen_qty!=='' ? '+'+row.gen_qty : ''}</td>
+        <td style="color:var(--flag)">${row.unres ? '₹'+row.unres.mrp : ''}</td>
+        <td style="color:var(--flag);font-size:10.5px">${row.unres ? row.unres.sp : ''}</td>
+        <td style="color:var(--flag);font-weight:600">${row.unres ? '-'+row.unres.qty : ''}</td>
+        <td>${row.showStatus ? badge(r.status) : ''}</td>
+      </tr>`;
+    });
+
+  }
+  tbody.innerHTML=html;
+}
+
+function badge(s) {
+  if (s==='full')    return '<span class="badge badge-full">⚡ Ready</span>';
+  if (s==='partial') return '<span class="badge badge-partial">⚠️ Partial</span>';
+  return '<span class="badge badge-flag">🚩 Flagged</span>';
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ===== PURE JS XLSX WRITER (no external dependencies) =====
+const XW = {
+  _t: (() => {
+    const t = new Uint32Array(256);
+    for (let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c;}
+    return t;
+  })(),
+  crc(d){ let c=0xFFFFFFFF; for(let i=0;i<d.length;i++)c=this._t[(c^d[i])&0xFF]^(c>>>8); return(c^0xFFFFFFFF)>>>0; },
+  s2b(s){ return new TextEncoder().encode(s); },
+  u16(n){ const b=new Uint8Array(2);new DataView(b.buffer).setUint16(0,n,true);return b; },
+  u32(n){ const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n,true);return b; },
+  cat(...a){ const t=a.reduce((s,x)=>s+x.length,0),r=new Uint8Array(t);let o=0;for(const x of a){r.set(x,o);o+=x.length;}return r; },
+  lfh(name,data,crc){
+    const nb=this.s2b(name);
+    return this.cat(new Uint8Array([0x50,0x4B,0x03,0x04]),this.u16(20),this.u16(0),this.u16(0),
+      this.u16(0),this.u16(0),this.u32(crc),this.u32(data.length),this.u32(data.length),
+      this.u16(nb.length),this.u16(0),nb);
+  },
+  cd(name,data,crc,off){
+    const nb=this.s2b(name);
+    return this.cat(new Uint8Array([0x50,0x4B,0x01,0x02]),this.u16(20),this.u16(20),this.u16(0),
+      this.u16(0),this.u16(0),this.u16(0),this.u32(crc),this.u32(data.length),this.u32(data.length),
+      this.u16(nb.length),this.u16(0),this.u16(0),this.u16(0),this.u16(0),this.u32(0),this.u32(off),nb);
+  },
+  zip(files){
+    const L=[],C=[];let off=0;
+    for(const f of files){
+      const crc=this.crc(f.data),loc=this.cat(this.lfh(f.name,f.data,crc),f.data);
+      C.push(this.cd(f.name,f.data,crc,off));L.push(loc);off+=loc.length;
+    }
+    const cs=off,cd=this.cat(...C);
+    const eocd=this.cat(new Uint8Array([0x50,0x4B,0x05,0x06]),this.u16(0),this.u16(0),
+      this.u16(files.length),this.u16(files.length),this.u32(cd.length),this.u32(cs),this.u16(0));
+    return this.cat(...L,cd,eocd);
+  },
+  esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
+  ref(c,r){ let s='';let n=c+1;while(n>0){s=String.fromCharCode(65+((n-1)%26))+s;n=Math.floor((n-1)/26);}return s+r; },
+  sheet(rows){
+    const rx=rows.map((row,ri)=>{
+      const cells=row.map((cell,ci)=>{
+        const ref=this.ref(ci,ri+1),v=cell??'';
+        if(typeof v==='number')return `<c r="${ref}"><v>${v}</v></c>`;
+        return `<c r="${ref}" t="inlineStr"><is><t>${this.esc(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${ri+1}">${cells}</row>`;
+    }).join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rx}</sheetData></worksheet>`;
+  },
+  create(sheets){
+    const files=[];
+    files.push({name:'[Content_Types].xml',data:this.s2b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`)});
+    files.push({name:'_rels/.rels',data:this.s2b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`)});
+    files.push({name:'xl/workbook.xml',data:this.s2b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${this.esc(s.name)}" sheetId="${i+1}" r:id="rId${i+2}"/>`).join('')}</sheets></workbook>`)});
+    files.push({name:'xl/_rels/workbook.xml.rels',data:this.s2b(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}</Relationships>`)});
+    sheets.forEach((s,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:this.s2b(this.sheet(s.rows))}));
+    return this.zip(files);
+  }
+};
+
+// ===== DOWNLOAD EXCEL =====
+function statusTxt(s) {
+  return s==='full' ? 'Ready' : s==='partial' ? 'Partial' : 'Flagged';
+}
+
+function buildOutputFilename() {
+  // Derive output name from input file names
+  if (uploadedFiles.length === 1) {
+    const base = uploadedFiles[0].name.replace(/\.csv$/i, '');
+    return base + '_Correction.xlsx';
+  }
+  // Multiple files: use common prefix if any, else generic
+  const names = uploadedFiles.map(f => f.name.replace(/\.csv$/i, ''));
+  // Find common prefix
+  let prefix = names[0];
+  for (const n of names.slice(1)) {
+    let i = 0;
+    while (i < prefix.length && i < n.length && prefix[i] === n[i]) i++;
+    prefix = prefix.slice(0, i);
+  }
+  prefix = prefix.replace(/[_\s-]+$/, ''); // trim trailing separators
+  if (prefix.length > 4) return prefix + '_Correction.xlsx';
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  return `MRP_Correction_${date}.xlsx`;
+}
+
+function buildSheetRows(statusFilter) {
+  const HEADER = [
+    'MC Name', 'Item Name',
+    'Consume MRP', 'Consume Sale Price', 'Consume Qty',
+    'Generate MRP', 'Generate Sale Price', 'Generate Qty',
+    'Unresolved MRP', 'Unresolved Sale Price', 'Unresolved Qty',
+    'Status'
+  ];
+
+  const rows = [HEADER];
+
+  for (const [mc, results] of Object.entries(allResults)) {
+    const filtered = results.filter(r => r.status === statusFilter);
+    for (const r of filtered) {
+      if (r.corrections.length === 0) {
+        // Pure flag — no corrections, only unresolved
+        const u = r.unresolved[0] || {};
+        rows.push([
+          mc, r.item,
+          '', '', '',
+          '', '', '',
+          u.mrp ?? '', u.sp ?? '', u.qty ?? '',
+          statusTxt(r.status)
+        ]);
+      } else {
+        r.corrections.forEach((c, ci) => {
+          const isLast = ci === r.corrections.length - 1;
+          const u = isLast && r.unresolved.length ? r.unresolved[0] : null;
+          rows.push([
+            mc,        // MC Name — every row
+            r.item,    // Item Name — every row (no blanks)
+            c.con_mrp, c.con_sp, c.con_qty,
+            c.gen_mrp, c.gen_sp, c.gen_qty,
+            u ? u.mrp : '', u ? u.sp : '', u ? u.qty : '',
+            statusTxt(r.status)  // Status — every row
+          ]);
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+function downloadExcel() {
+  try {
+    const sheets = [
+      { name: 'Ready',   rows: buildSheetRows('full')    },
+      { name: 'Partial', rows: buildSheetRows('partial') },
+      { name: 'Flagged', rows: buildSheetRows('flag')    },
+    ];
+
+    const xlsxData = XW.create(sheets);
+    const blob = new Blob([xlsxData], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = buildOutputFilename();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Download failed: ' + e.message);
+  }
+}
+
+// ===== RESET =====
+function resetTool() {
+  uploadedFiles=[]; allResults={}; currentMC=''; currentFilter='all';
+  document.getElementById('filesList').innerHTML='';
+  document.getElementById('fileCount').textContent='';
+  document.getElementById('processBtn').disabled=true;
+  document.getElementById('upload-section').style.display='block';
+  document.getElementById('controls').style.display='none';
+  document.getElementById('results-section').style.display='none';
+  document.getElementById('searchBox').value='';
+  fileInput.value='';
+}
+</script>
+</body>
+</html>

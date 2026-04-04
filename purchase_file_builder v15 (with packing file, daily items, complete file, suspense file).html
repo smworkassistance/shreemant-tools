@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant — Purchase File Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{--red:#8B0000;--redd:#5C0000;--gold:#C9A227;--cream:#FAF0E6;--brown:#2C1810;--brownl:#4A2C1A;--white:#fff;--gray:#888880;--border:#D4B896;--green:#2E7D32;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--cream);color:var(--brown);font-family:'IBM Plex Mono',monospace;min-height:100vh;}
+.hdr{background:var(--red);padding:20px 32px;border-bottom:4px solid var(--gold);display:flex;align-items:center;gap:14px;}
+.hdr h1{font-family:'Playfair Display',serif;font-size:21px;color:var(--cream);}
+.hdr h1 span{color:var(--gold);}
+.hdr sub{font-size:8.5px;color:rgba(250,240,230,.5);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:3px;}
+.hdr-date{margin-left:auto;font-size:10px;color:var(--gold);border:1px solid rgba(201,162,39,.4);padding:4px 12px;border-radius:3px;}
+.main{max-width:960px;margin:0 auto;padding:24px 18px 60px;}
+.stitle{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-weight:500;margin-bottom:11px;display:flex;align-items:center;gap:10px;}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border);}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(max-width:650px){.cards{grid-template-columns:1fr;}.hdr{padding:16px;}}
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.card.loaded{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);}
+.card.opt{border-style:dashed;}
+.card-hd{background:var(--brown);padding:9px 13px;display:flex;align-items:center;justify-content:space-between;}
+.card.opt .card-hd{background:var(--brownl);}
+.card-hd h3{font-family:'Playfair Display',serif;font-size:13px;color:var(--cream);font-weight:600;}
+.badge{font-size:7.5px;letter-spacing:1px;padding:2px 7px;border-radius:2px;text-transform:uppercase;}
+.breq{background:rgba(201,162,39,.15);color:var(--gold);border:1px solid rgba(201,162,39,.4);}
+.bopt{background:rgba(255,255,255,.07);color:rgba(250,240,230,.4);border:1px solid rgba(255,255,255,.1);}
+.drop{padding:22px 12px;text-align:center;cursor:pointer;border:none;background:none;width:100%;transition:background .15s;}
+.drop:hover{background:#FDF6EE;}
+.drop-ico{font-size:24px;margin-bottom:5px;display:block;}
+.drop-txt{font-size:10px;color:var(--brownl);line-height:1.6;}
+.drop-txt span{color:var(--red);font-weight:500;text-decoration:underline;}
+.ftype{display:inline-block;margin-top:5px;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);padding:2px 6px;border:1px solid var(--border);border-radius:2px;}
+input[type=file]{display:none;}
+.fstatus{display:none;padding:9px 13px;background:#FFFBF0;border-top:1px solid var(--border);}
+.fstatus.show{display:block;}
+.fname{font-size:10px;font-weight:500;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.finfo{font-size:9px;color:var(--gray);display:flex;gap:10px;flex-wrap:wrap;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;margin-right:2px;}
+.cbtn{float:right;font-size:9px;color:var(--gray);cursor:pointer;background:none;border:none;font-family:inherit;}
+.cbtn:hover{color:var(--red);}
+.mc-box{background:var(--white);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:20px;}
+.mc-hd{background:var(--brown);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;}
+.mc-hd h3{font-family:'Playfair Display',serif;font-size:13px;color:var(--cream);font-weight:600;}
+.mc-hd small{font-size:8.5px;color:rgba(250,240,230,.45);}
+.mc-ph{padding:20px;font-size:10px;color:var(--gray);line-height:1.8;text-align:center;}
+.mc-grid{display:grid;grid-template-columns:repeat(4,1fr);}
+@media(max-width:650px){.mc-grid{grid-template-columns:repeat(2,1fr);}}
+.mc-row{display:flex;align-items:flex-start;padding:9px 11px;border-bottom:1px solid #f0e8dc;border-right:1px solid #f0e8dc;cursor:pointer;transition:background .15s;}
+.mc-row:hover{background:#FDF6EE;}
+.mc-chk{display:none;}
+.mc-sw{width:34px;height:19px;background:var(--border);border-radius:10px;flex-shrink:0;margin-top:2px;margin-right:9px;position:relative;transition:background .2s;}
+.mc-sw::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:white;transition:left .18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.mc-chk:checked+.mc-sw{background:var(--red);}
+.mc-chk:checked+.mc-sw::after{left:17px;}
+.mc-info{flex:1;min-width:0;}
+.mc-name{font-size:10.5px;font-weight:500;color:var(--brown);}
+.mc-stat{font-size:8.5px;color:var(--gray);margin-top:2px;}
+.mc-dflt{font-size:7.5px;padding:1px 5px;border-radius:2px;margin-top:3px;display:inline-block;}
+.mc-on{background:rgba(46,125,50,.08);color:var(--green);border:1px solid rgba(46,125,50,.25);}
+.mc-off{background:rgba(139,0,0,.06);color:var(--red);border:1px solid rgba(139,0,0,.18);}
+.mc-sum{padding:9px 16px;background:#FFFBF0;border-top:1px solid var(--border);font-size:10px;color:var(--brown);display:none;}
+.mc-sum.show{display:block;}
+.mc-sum span{color:var(--red);font-weight:500;}
+.action{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+.btn-gen{background:var(--red);color:var(--cream);border:none;border-radius:6px;padding:12px 30px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .1s;border-bottom:3px solid var(--redd);display:flex;align-items:center;gap:9px;}
+.btn-gen:hover:not(:disabled){background:#A00000;transform:translateY(-1px);}
+.btn-gen:active:not(:disabled){transform:translateY(0);border-bottom-width:1px;margin-bottom:2px;}
+.btn-gen:disabled{background:var(--border);border-bottom-color:var(--gray);cursor:not-allowed;color:var(--gray);}
+.btn-gen.loading .sp{display:inline;animation:spin .8s linear infinite;}
+.btn-gen.loading .ar{display:none;}
+.sp{display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.reqs{font-size:9px;color:var(--gray);line-height:1.9;}
+.req{display:flex;align-items:center;gap:6px;}
+.rdot{width:5px;height:5px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.req.ok .rdot{background:var(--green);}
+.logbox{background:var(--brown);border-radius:7px;overflow:hidden;}
+.log-hd{padding:8px 14px;background:var(--redd);font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(250,240,230,.6);display:flex;align-items:center;gap:8px;}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+.log-body{padding:12px;min-height:80px;max-height:220px;overflow-y:auto;font-size:10px;line-height:2;color:rgba(250,240,230,.75);}
+.log-body::-webkit-scrollbar{width:3px;}
+.log-body::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
+.ll{display:flex;gap:10px;}
+.lt{color:var(--gold);opacity:.5;flex-shrink:0;font-size:9px;}
+.lok{color:#81C784;}.lwarn{color:#FFD54F;}.lerr{color:#EF9A9A;}
+/* ── OUTPUT SELECTOR BOX ── */
+.out-box{background:var(--white);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:20px;}
+.out-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+@media(max-width:600px){.out-grid{grid-template-columns:1fr;}}
+.out-row{display:flex;align-items:flex-start;padding:12px 14px;border-bottom:1px solid #f0e8dc;border-right:1px solid #f0e8dc;cursor:pointer;transition:background .15s;gap:10px;}
+.out-row:hover{background:#FDF6EE;}
+.out-chk{display:none;}
+.out-sw{width:34px;height:19px;background:var(--border);border-radius:10px;flex-shrink:0;margin-top:3px;position:relative;transition:background .2s;}
+.out-sw::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:white;transition:left .18s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.out-chk:checked+.out-sw{background:var(--red);}
+.out-chk:checked+.out-sw::after{left:17px;}
+.out-info{flex:1;}
+.out-name{font-size:11px;font-weight:500;color:var(--brown);}
+.out-desc{font-size:9px;color:var(--gray);margin-top:2px;line-height:1.5;}
+.out-file{font-size:8.5px;color:var(--red);margin-top:3px;letter-spacing:.3px;}
+.out-footer{padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#FFFBF0;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     HEADER BAR — Branding + today's date display
+     ════════════════════════════════════════════════════ -->
+<div class="hdr">
+  <span style="font-size:22px">🛒</span>
+  <div>
+    <h1>Shreemant — <span>Purchase File Builder</span></h1>
+    <sub>Daily PO Preparation Automation · Baat Bharose Ki</sub>
+  </div>
+  <div class="hdr-date" id="hdrDate"></div>
+</div>
+
+<div class="main">
+
+  <!-- ══ STEP 1: FILE UPLOAD CARDS ══════════════════════════════════
+       Three cards: Purchase Register (required), Columnar Stock Report
+       (optional), Template (required). Each has an invisible file input
+       behind a styled drop zone. onclick triggers the hidden input.
+       ondrop handles drag-and-drop. onchange fires when file selected.
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="stitle">Step 1 — Upload Files</div>
+  <div class="cards">
+    <div class="card" id="card1">
+      <div class="card-hd"><h3>Purchase Register</h3><span class="badge breq">Required</span></div>
+      <div class="drop" onclick="document.getElementById('f1').click()" ondragover="event.preventDefault();this.style.background='#FFF0E0'" ondragleave="this.style.background=''" ondrop="event.preventDefault();this.style.background='';loadPurchase(event.dataTransfer.files[0])">
+        <span class="drop-ico">📋</span>
+        <div class="drop-txt">Click or drag file here</div>
+        <div class="ftype">.csv or .xlsx — Busy Export</div>
+      </div>
+      <input type="file" id="f1" accept=".csv,.xlsx,.xls" onchange="loadPurchase(this.files[0])">
+      <div class="fstatus" id="s1"><button class="cbtn" onclick="clr('csv')">✕ Clear</button><div class="fname" id="n1"></div><div class="finfo" id="i1"></div></div>
+    </div>
+    <div class="card opt" id="card2">
+      <div class="card-hd"><h3>Columnar Stock Report</h3><span class="badge bopt">Optional</span></div>
+      <div class="drop" onclick="document.getElementById('f2').click()" ondragover="event.preventDefault();this.style.background='#FFF0E0'" ondragleave="this.style.background=''" ondrop="event.preventDefault();this.style.background='';loadCol(event.dataTransfer.files[0])">
+        <span class="drop-ico">📊</span>
+        <div class="drop-txt">Click or drag file here</div>
+        <div class="ftype">.csv or .xlsx — MC-wise Stock</div>
+      </div>
+      <input type="file" id="f2" accept=".csv,.xlsx,.xls" onchange="loadCol(this.files[0])">
+      <div class="fstatus" id="s2"><button class="cbtn" onclick="clr('col')">✕ Clear</button><div class="fname" id="n2"></div><div class="finfo" id="i2"></div></div>
+    </div>
+    <div class="card" id="card3">
+      <div class="card-hd"><h3>Template File</h3><span class="badge breq">Required</span></div>
+      <div class="drop" onclick="document.getElementById('f3').click()" ondragover="event.preventDefault();this.style.background='#FFF0E0'" ondragleave="this.style.background=''" ondrop="event.preventDefault();this.style.background='';loadTpl(event.dataTransfer.files[0])">
+        <span class="drop-ico">📐</span>
+        <div class="drop-txt">Click or drag file here</div>
+        <div class="ftype">.csv or .xlsx — Formulas Template</div>
+      </div>
+      <input type="file" id="f3" accept=".csv,.xlsx,.xls" onchange="loadTpl(this.files[0])">
+      <div class="fstatus" id="s3"><button class="cbtn" onclick="clr('tpl')">✕ Clear</button><div class="fname" id="n3"></div><div class="finfo" id="i3"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: MATERIAL CENTER SELECTOR ══════════════════════════
+       Rendered dynamically by renderMC() after File 2 is uploaded.
+       Shows toggle switches for each MC column found in Columnar file.
+       Selected MCs are summed per item → becomes Closing Stock value.
+       If File 2 not uploaded, this section shows a placeholder message.
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="stitle">Step 2 — Select Material Centers for Closing Stock</div>
+  <div class="mc-box">
+    <div class="mc-hd"><h3>Material Center Selection</h3><small id="mcHint">Upload File 2 to configure</small></div>
+    <div id="mcContent"><div class="mc-ph">Upload <b>Columnar Stock Report</b> (File 2) to choose which Material Centers<br>sum into <b>Closing Stock</b>.<br><span style="color:var(--border);font-size:9px;">If skipped → CSV's original Closing Stock column is used.</span></div></div>
+    <div class="mc-sum" id="mcSum"></div>
+  </div>
+
+  <!-- ══ STEP 3: GENERATE BUTTON + ACTIVITY LOG ═══════════════════
+       Button disabled until File 1 + File 3 are loaded (minimum).
+       On click: builds Excel worksheet object, writes all rows,
+       applies freeze pane, column widths/hidden flags, then downloads.
+       Log box shows real-time status messages with timestamps.
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="stitle">Step 3 — Select Outputs & Generate</div>
+  <div class="out-box">
+    <div class="out-grid">
+      <label class="out-row" for="o1">
+        <input type="checkbox" id="o1" class="out-chk" checked>
+        <div class="out-sw"></div>
+        <div class="out-info">
+          <div class="out-name">📋 Complete Purchase File</div>
+          <div class="out-desc">All items — full purchase register</div>
+          <div class="out-file">Purchase file_DDMMYYYY.xlsx</div>
+        </div>
+      </label>
+      <label class="out-row" for="o2">
+        <input type="checkbox" id="o2" class="out-chk">
+        <div class="out-sw"></div>
+        <div class="out-info">
+          <div class="out-name">📦 Packing Items</div>
+          <div class="out-desc">Rows where Packing Item column is filled</div>
+          <div class="out-file">Packing Items_DDMMYYYY.xlsx</div>
+        </div>
+      </label>
+      <label class="out-row" for="o3">
+        <input type="checkbox" id="o3" class="out-chk">
+        <div class="out-sw"></div>
+        <div class="out-info">
+          <div class="out-name">🔀 Packing Suspense</div>
+          <div class="out-desc">Rows where Party Name contains "Suspense"</div>
+          <div class="out-file">Packing Suspense_DDMMYYYY.xlsx</div>
+        </div>
+      </label>
+      <label class="out-row" for="o4">
+        <input type="checkbox" id="o4" class="out-chk">
+        <div class="out-sw"></div>
+        <div class="out-info">
+          <div class="out-name">🗓 Daily Items</div>
+          <div class="out-desc">Rows where Inlet Channel contains "Daily"</div>
+          <div class="out-file">Daily Items_DDMMYYYY.xlsx</div>
+        </div>
+      </label>
+    </div>
+    <div class="out-footer">
+      <button class="btn-gen" id="btnGen" onclick="generate()" disabled>
+        <span class="sp">↻</span><span class="ar">⬇</span>&nbsp;Download Selected Files
+      </button>
+      <div class="reqs">
+        <div class="req" id="r1"><div class="rdot"></div>Purchase Register (File 1)</div>
+        <div class="req" id="r3"><div class="rdot"></div>Template File (File 3)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logbox">
+    <div class="log-hd"><div class="ldot"></div>Activity Log</div>
+    <div class="log-body" id="lb">
+      <div class="ll"><span class="lt">--:--:--</span><span class="log-msg">Tool ready. Upload files to begin.</span></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── COLUMN CONFIG ────────────────────────────────────────────────
+// Template col indices to HIDE (0-indexed)
+// 5=Sales Price, 6=Amount, 7=Net Cost/pc, 9=Discount, 10=net sale,
+// 11=Alias, 12=Inlet Channel, 13=Packing Item,
+// 14=Beat Day, 15=Outlet Channel, 16=PO Difficulty Level,
+// 17=PO Priority, 18=PO Order Size, 19=PO Responsible Person
+const HIDDEN = new Set([5,6,7,9,10,11,12,13,14,15,16,17,18,19]);
+
+// Visible column widths (template 0-indexed → Excel char width)
+const WIDTHS = {0:12, 1:20, 2:38, 3:5, 4:9, 8:9};
+const FORMULA_W = 8; // all formula columns
+
+// CSV col 0-indexed → Template col 0-indexed mapping
+// CSV has "Bill No." at index 1 which template doesn't have
+// CSV[0]=BillDate→T[0], CSV[2]=PartyName→T[1], CSV[3]=ItemName→T[2],
+// CSV[4]=Qty→T[3], CSV[5]=MRP→T[4], CSV[6]=SalesPrice→T[5],
+// CSV[7]=Amount→T[6], CSV[8]=NetCost→T[7], CSV[9]=ClosingStock→T[8],
+// CSV[10]=Discount→T[9], CSV[11]=netSale→T[10], CSV[12]=Alias→T[11],
+// CSV[13]=InletCh→T[12], CSV[14]=PackingItem→T[13],
+// CSV[15]=BeatDay→T[14], CSV[16]=OutletCh→T[15],
+// CSV[17]=PODifficulty→T[16], CSV[18]=POPriority→T[17],
+// CSV[19]=POOrderSize→T[18], CSV[20]=POResponsible→T[19]
+const TPL_TO_CSV = [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+
+// Forward-fill CSV column indices (bill-level, not item-level)
+const FWD = new Set([0, 2, 15, 16, 17, 18, 19, 20]);
+
+// Template cols that must ALWAYS be written as text (never parsed as number)
+// 0=Bill Date, 1=Party Name, 2=Item Name, 12=Inlet Channel, 13=Packing Item,
+// 14=Beat Day, 15=Outlet Channel, 16=PO Difficulty, 17=PO Priority,
+// 18=PO Order Size, 19=PO Responsible
+const STRING_COLS = new Set([0,1,2,12,13,14,15,16,17,18,19]);
+// MC columns OFF by default (non-sellable / adjustment centers)
+const MC_OFF  = new Set(['Expiry/Damage','Stock Check','Stock Correction','VT','Mitravinda']);
+// MC columns never shown as toggles (computed totals / non-stock columns)
+const MC_SKIP = new Set(['Item Details','MainUnit','Total Stock(Main)']);
+
+// ─── STATE ────────────────────────────────────────────────────────
+// Single global state object. All file data lives here after loading.
+// csv: processed rows (forward-filled, sorted). csvH: header array.
+// colMap: Map(itemName → {mcName: qty}). tplH/tplF: headers + formula strings.
+// netSaleMap: Map(itemName → combinedNetSale) — built only when FY toggle is ON.
+const S = {csv:null, csvH:null, colMap:null, mcNames:[], mcStats:{}, tplH:null, tplF:null, netSaleMap:null};
+
+// ─── DATE ─────────────────────────────────────────────────────────
+(()=>{
+  const d=new Date(),dy=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('hdrDate').textContent=`${dy[d.getDay()]} ${d.getDate()} ${mo[d.getMonth()]} ${d.getFullYear()}`;
+})();
+
+// ─── LOG ──────────────────────────────────────────────────────────
+function log(msg,type='info'){
+  const lb=document.getElementById('lb');
+  const t=new Date().toTimeString().slice(0,8);
+  const d=document.createElement('div');d.className='ll';
+  d.innerHTML=`<span class="lt">${t}</span><span class="l${type} log-msg">${msg}</span>`;
+  lb.appendChild(d);lb.scrollTop=lb.scrollHeight;
+}
+
+
+
+// ─── HELPERS ──────────────────────────────────────────────────────
+function showSt(n,name,html){
+  document.getElementById(`s${n}`).classList.add('show');
+  document.getElementById(`n${n}`).textContent=name;
+  document.getElementById(`i${n}`).innerHTML=html;
+  document.getElementById(`card${n}`).classList.add('loaded');
+}
+function checkReady(){
+  const ok=S.csv&&S.tplH;
+  document.getElementById('btnGen').disabled=!ok;
+  document.getElementById('r1').classList.toggle('ok',!!S.csv);
+  document.getElementById('r3').classList.toggle('ok',!!S.tplH);
+}
+function clr(type){
+  if(type==='csv'){S.csv=null;S.csvH=null;document.getElementById('s1').classList.remove('show');document.getElementById('card1').classList.remove('loaded');document.getElementById('f1').value='';log('Purchase Register cleared.','warn');}
+  else if(type==='col'){S.colMap=null;S.mcNames=[];S.mcStats={};document.getElementById('s2').classList.remove('show');document.getElementById('card2').classList.remove('loaded');document.getElementById('f2').value='';resetMC();log('Columnar cleared.','warn');}
+  else{S.tplH=null;S.tplF=null;document.getElementById('s3').classList.remove('show');document.getElementById('card3').classList.remove('loaded');document.getElementById('f3').value='';log('Template cleared.','warn');}
+  checkReady();
+}
+function pv(v){
+  if(v===undefined||v===null||v==='')return null;
+  if(typeof v==='number')return v;
+  const s=String(v).trim().replace(/,/g,'');
+  if(!s||s==='-')return null;
+  const n=parseFloat(s);return isNaN(n)?String(v).trim():n;
+}
+
+// ─── LOAD PURCHASE REGISTER (CSV or Excel) ────────────────────────
+function loadPurchase(file){
+  if(!file)return;
+  log(`Loading: ${file.name} ...`);
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    Papa.parse(file,{
+      skipEmptyLines:false,
+      complete(res){processPurchaseRows(res.data,file.name);},
+      error(e){log(`❌ ${e.message}`,'err');}
+    });
+  } else {
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',raw:false,dateNF:'DD-MM-YYYY'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const all=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,dateNF:'DD-MM-YYYY'});
+        processPurchaseRows(all,file.name);
+      }catch(e){log(`❌ ${e.message}`,'err');}
+    };
+    rd.readAsArrayBuffer(file);
+  }
+}
+function loadCSV(file){loadPurchase(file);} // backward compat for drag drop
+function processPurchaseRows(rows,fname){
+  try{
+    let hi=-1;
+    for(let i=0;i<Math.min(10,rows.length);i++){
+      if(rows[i].some(c=>String(c).trim()==='Bill Date')){hi=i;break;}
+    }
+    if(hi===-1){log('❌ "Bill Date" header not found','err');return;}
+    S.csvH=rows[hi].map(c=>String(c).trim());
+    const iItem=S.csvH.indexOf('Item Name');
+    // Keep rows with a valid non-numeric Item Name
+    const raw=rows.slice(hi+1).filter(r=>{
+      if(r.length<=3)return false;
+      const item=String(r[iItem]||'').trim();
+      if(!item)return false;
+      if(!isNaN(Number(item)))return false; // skip rows where Item Name is a number
+      return true;
+    });
+    // FORWARD FILL
+    const filled=raw.map(r=>[...r]);
+    const last={};
+    filled.forEach(row=>{
+      FWD.forEach(ci=>{
+        const v=ci<row.length?String(row[ci]||'').trim():'';
+        if(v){last[ci]=v;}else if(last[ci]){row[ci]=last[ci];}
+      });
+    });
+    // SORT A-Z by Item Name
+    filled.sort((a,b)=>String(a[iItem]||'').toLowerCase().localeCompare(String(b[iItem]||'').toLowerCase()));
+    S.csv=filled;
+    const parties=new Set(filled.map(r=>String(r[2]||'').trim()).filter(Boolean));
+    const items=new Set(filled.map(r=>String(r[iItem]||'').trim()).filter(Boolean));
+    log(`✓ ${filled.length.toLocaleString()} rows | ${parties.size} parties | ${items.size} items | sorted A-Z | forward-fill done`,'ok');
+    showSt(1,fname,`<span><span class="sdot"></span>${filled.length.toLocaleString()} rows</span><span>· ${parties.size} parties</span><span>· ${items.size} items</span>`);
+    checkReady();
+  }catch(e){log(`❌ ${e.message}`,'err');}
+}
+
+// ─── LOAD COLUMNAR ────────────────────────────────────────────────
+function loadCol(file){
+  if(!file)return;
+  log(`Loading: ${file.name} ...`);
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'){
+    Papa.parse(file,{
+      skipEmptyLines:false,
+      complete(res){processColRows(res.data,file.name);},
+      error(e){log(`❌ ${e.message}`,'err');}
+    });
+  } else {
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        processColRows(XLSX.utils.sheet_to_json(ws,{header:1,defval:null}),file.name);
+      }catch(e){log(`❌ Columnar: ${e.message}`,'err');}
+    };
+    rd.readAsArrayBuffer(file);
+  }
+}
+function processColRows(all,fname){
+  try{
+    let hi=-1;
+    for(let i=0;i<Math.min(10,all.length);i++){
+      if(all[i]&&all[i].some(c=>String(c||'').trim()==='Item Details')){hi=i;break;}
+    }
+    if(hi===-1){log('❌ "Item Details" not found in Columnar','err');return;}
+    const hdrs=all[hi].map(c=>String(c||'').trim());
+    const data=all.slice(hi+1).filter(r=>r&&r[0]);
+    const mcCols=hdrs.map((h,i)=>({name:h,idx:i})).filter(({name})=>!MC_SKIP.has(name));
+    const iItem=hdrs.indexOf('Item Details');
+    const map=new Map();
+    const stats={};
+    mcCols.forEach(({name})=>{stats[name]={count:0,total:0};});
+    data.forEach(row=>{
+      const nm=String(row[iItem]||'').trim();if(!nm)return;
+      const obj={};
+      mcCols.forEach(({name,idx})=>{
+        const v=parseFloat(row[idx])||0;
+        obj[name]=v;
+        if(v>0){stats[name].count++;stats[name].total+=v;}
+      });
+      map.set(nm,obj);
+    });
+    S.colMap=map;S.mcNames=mcCols.map(c=>c.name);S.mcStats=stats;
+    log(`✓ ${map.size.toLocaleString()} items | ${S.mcNames.length} MCs detected`,'ok');
+    showSt(2,fname,`<span><span class="sdot"></span>${map.size.toLocaleString()} items</span><span>· ${S.mcNames.length} MCs</span>`);
+    renderMC();
+  }catch(e){log(`❌ Columnar: ${e.message}`,'err');}
+}
+
+// ─── MC UI ────────────────────────────────────────────────────────
+// resetMC(): called when File 2 is cleared — restores placeholder text
+function resetMC(){
+  document.getElementById('mcContent').innerHTML='<div class="mc-ph">Upload <b>Columnar Stock Report</b> (File 2) to choose Material Centers.<br><span style="color:var(--border);font-size:9px;">If skipped → CSV\'s original Closing Stock is used.</span></div>';
+  document.getElementById('mcSum').classList.remove('show');
+  document.getElementById('mcHint').textContent='Upload File 2 to configure';
+}
+function renderMC(){
+  let html='<div class="mc-grid">';
+  S.mcNames.forEach(mc=>{
+    const id=`mc_${mc.replace(/[^a-z0-9]/gi,'_')}`;
+    const chk=MC_OFF.has(mc)?'':'checked';
+    const badge=MC_OFF.has(mc)?'<span class="mc-dflt mc-off">OFF</span>':'<span class="mc-dflt mc-on">ON</span>';
+    const st=S.mcStats[mc]||{count:0,total:0};
+    html+=`<label class="mc-row" for="${id}">
+      <input type="checkbox" class="mc-chk" id="${id}" value="${mc}" ${chk} onchange="updMC()">
+      <div class="mc-sw"></div>
+      <div class="mc-info">
+        <div class="mc-name">${mc}</div>
+        <div class="mc-stat">${st.count} items · ${Math.round(st.total)} units</div>
+        ${badge}
+      </div>
+    </label>`;
+  });
+  html+='</div>';
+  document.getElementById('mcContent').innerHTML=html;
+  document.getElementById('mcHint').textContent='Toggle MCs → their sum = Closing Stock';
+  updMC();
+}
+function updMC(){
+  const sel=[...document.querySelectorAll('.mc-chk:checked')].map(e=>e.value);
+  const el=document.getElementById('mcSum');
+  el.innerHTML=sel.length?`Closing Stock = <span>${sel.join(' + ')}</span>`:'⚠ No MC selected — Closing Stock = 0';
+  el.style.color=sel.length?'var(--brown)':'var(--gold)';
+  el.classList.add('show');
+}
+function getSelMCs(){return[...document.querySelectorAll('.mc-chk:checked')].map(e=>e.value);}
+
+// ─── LOAD TEMPLATE ────────────────────────────────────────────────
+function loadTpl(file){
+  if(!file)return;
+  log(`Loading: ${file.name} ...`);
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellFormula:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rng=XLSX.utils.decode_range(ws['!ref']);
+      const hdrs=[],fmls=[];
+      for(let c=rng.s.c;c<=rng.e.c;c++){
+        const a1=XLSX.utils.encode_cell({r:0,c});hdrs.push(ws[a1]?String(ws[a1].v||''):'');
+        const a2=XLSX.utils.encode_cell({r:1,c});fmls.push(ws[a2]&&ws[a2].f?ws[a2].f:null);
+      }
+      S.tplH=hdrs;S.tplF=fmls;
+      log(`✓ Template: ${hdrs.length} cols | ${fmls.filter(Boolean).length} formula cols`,'ok');
+      showSt(3,file.name,`<span><span class="sdot"></span>${hdrs.length} cols</span><span>· ${fmls.filter(Boolean).length} formula cols</span>`);
+      checkReady();
+    }catch(e){log(`❌ Template: ${e.message}`,'err');}
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+// ─── EXTEND FORMULA ───────────────────────────────────────────────
+// Template stores formulas referencing row 2 (e.g. $I2, $K2, AM2).
+// This function replaces "2" with the actual Excel row number for each data row.
+// Regex matches: optional $, one+ uppercase letters, then "2" as whole word.
+// Example: "$I2" → "$I5" | "AM2" → "AM5" | "DATE(2025,4,1)" → unchanged (no col prefix)
+function extF(f,row){
+  // Replace col+2 → col+row, skip DATE(2025,4,1) context
+  return f.replace(/(\$?[A-Z]+)(2)\b/g,(_,col)=>col+row);
+}
+
+// ─── FINANCIAL YEAR HELPERS (additive — new feature) ─────────────
+// getFY(dateStr): detects Indian FY from any DD-MM-YYYY date string.
+// Logic: month >= 4 (Apr-Mar) → same calendar year is FY start.
+// Example: "15-06-2024" → month=6 ≥ 4 → FY="2024-25"
+//          "10-02-2025" → month=2 < 4  → FY="2024-25" (still same FY)
+//          "12-04-2025" → month=4 ≥ 4  → FY="2025-26"
+// No hardcoded years — works for any FY automatically.
+function getFY(dateStr){
+  const s=String(dateStr||'').trim();
+  // Support both DD-MM-YYYY and YYYY-MM-DD
+  let day,mon,yr;
+  if(s.indexOf('-')===2){// DD-MM-YYYY
+    const p=s.split('-');day=+p[0];mon=+p[1];yr=+p[2];
+  } else {// YYYY-MM-DD or other
+    const p=s.split('-');yr=+p[0];mon=+p[1];day=+p[2];
+  }
+  if(!yr||!mon) return 'UNKNOWN';
+  const fyStart = mon>=4 ? yr : yr-1;
+  return `${fyStart}-${String(fyStart+1).slice(-2)}`;
+}
+
+// buildNetSaleMap(): called inside generate() when FY toggle is ON.
+// Groups all rows by item name, then per FY takes one unique net sale value
+// (all rows of same item in same FY have identical net sale — Busy behaviour).
+// Finally sums net sale across all FYs for each item.
+// CSV col 11 = net sale (0-indexed). CSV col 0 = Bill Date.
+function buildNetSaleMap(){
+  const map=new Map(); // itemName → {fyKey: netSaleValue}
+  const iItem=S.csvH?S.csvH.indexOf('Item Name'):3;
+  const iDate=S.csvH?S.csvH.indexOf('Bill Date'):0;
+  const iNetSale=S.csvH?S.csvH.indexOf('net sale'):11;
+  S.csv.forEach(row=>{
+    const item=String(row[iItem]||'').trim(); if(!item) return;
+    const fy=getFY(row[iDate]);
+    const ns=parseFloat(String(row[iNetSale]||'').replace(/,/g,''))||0;
+    if(!map.has(item)) map.set(item,{});
+    const fyMap=map.get(item);
+    // Each FY: store only one value (they are identical across rows in same FY)
+    if(!fyMap[fy]) fyMap[fy]=ns;
+  });
+  // Sum across all FYs per item
+  const result=new Map();
+  map.forEach((fyMap,item)=>{
+    const total=Object.values(fyMap).reduce((s,v)=>s+v,0);
+    result.set(item,total);
+  });
+  return result;
+}
+
+// ─── GENERATE ─────────────────────────────────────────────────────
+// buildSheet(rows): builds one Excel worksheet from a given row array.
+// All formula extension, MC override, FY net sale, string protection
+// logic is applied here. Returns a SheetJS worksheet object.
+function buildSheet(rows, selMCs, useMC, fyMode){
+  const ws={};
+  const nc=S.tplH.length;
+  const iItem=S.csvH?S.csvH.indexOf('Item Name'):3;
+  let matched=0,unmatched=0;
+  // Header row
+  S.tplH.forEach((h,ci)=>{
+    ws[XLSX.utils.encode_cell({r:0,c:ci})]={v:h,t:'s'};
+  });
+  // Data rows
+  rows.forEach((csvRow,ri)=>{
+    const exRow=ri+2;
+    const itemName=String(csvRow[iItem]||'').trim();
+    S.tplH.forEach((_,ci)=>{
+      const addr=XLSX.utils.encode_cell({r:ri+1,c:ci});
+      if(S.tplF[ci]){
+        ws[addr]={f:extF(S.tplF[ci],exRow),t:'n'};
+      } else {
+        const csvIdx=ci<TPL_TO_CSV.length?TPL_TO_CSV[ci]:null;
+        let val=(csvIdx!==null&&csvIdx<csvRow.length)?csvRow[csvIdx]:null;
+        // Closing Stock override (template col 8)
+        if(ci===8&&useMC){
+          const cd=S.colMap.get(itemName);
+          if(cd){val=selMCs.reduce((s,mc)=>s+(cd[mc]||0),0);matched++;}
+          else{unmatched++;}
+        }
+        // Net Sale FY combine (template col 10)
+        if(ci===10&&fyMode&&S.netSaleMap&&S.netSaleMap.has(itemName)){
+          val=S.netSaleMap.get(itemName);
+        }
+        // Write cell — text columns always as string
+        if(ci===0){
+          const dstr=String(val||'').trim();
+          if(dstr) ws[addr]={v:dstr,t:'s'};
+        } else if(STRING_COLS.has(ci)){
+          const sval=String(val||'').trim();
+          if(sval) ws[addr]={v:sval,t:'s'};
+        } else {
+          const pval=pv(val);
+          if(pval===null){}
+          else if(typeof pval==='number')ws[addr]={v:pval,t:'n'};
+          else ws[addr]={v:String(pval),t:'s'};
+        }
+      }
+    });
+  });
+  // Sheet metadata
+  ws['!ref']=XLSX.utils.encode_range({r:0,c:0},{r:rows.length,c:nc-1});
+  ws['!sheetViews']=[{state:'frozen',ySplit:1,topLeftCell:'A2'}];
+  const cols=[];
+  for(let ci=0;ci<nc;ci++){
+    let wch=WIDTHS[ci]||(S.tplF[ci]?FORMULA_W:10);
+    if(S.tplF[ci]&&!WIDTHS[ci])wch=FORMULA_W;
+    cols.push({wch,hidden:HIDDEN.has(ci)});
+  }
+  ws['!cols']=cols;
+  return ws;
+}
+
+function generate(){
+  if(!S.csv||!S.tplH){log('❌ Upload required files first','err');return;}
+  // Check at least one output selected
+  const anySelected=[...document.querySelectorAll('.out-chk:checked')].length>0;
+  if(!anySelected){log('❌ Select at least one output to download','err');return;}
+  const btn=document.getElementById('btnGen');
+  btn.classList.add('loading');btn.disabled=true;
+  const selMCs=getSelMCs();
+  const useMC=!!(S.colMap&&selMCs.length);
+  setTimeout(()=>{
+    try{
+      log('─── Generating ───');
+      // FY auto-detect
+      S.netSaleMap=buildNetSaleMap();
+      const iDateCheck=S.csvH?S.csvH.indexOf('Bill Date'):0;
+      const fySet=new Set(S.csv.map(r=>getFY(r[iDateCheck])));
+      const fyMode=fySet.size>1;
+      if(fyMode) log(`✓ Multi-FY detected (${[...fySet].join(', ')}) — Net Sale auto-combined`,'ok');
+
+      // Row filters (CSV indices: PartyName=2, InletChannel=13, PackingItem=14)
+      const iParty=S.csvH?S.csvH.indexOf('Party Name'):2;
+      const iInlet=S.csvH?S.csvH.indexOf('Inlet Channel'):13;
+      const iPacking=S.csvH?S.csvH.indexOf('Packing Item'):14;
+      const now=new Date();
+      const ds=`${String(now.getDate()).padStart(2,'0')}${String(now.getMonth()+1).padStart(2,'0')}${now.getFullYear()}`;
+      let count=0;
+
+      // Output 1 — Complete Purchase File
+      if(document.getElementById('o1').checked){
+        const ws=buildSheet(S.csv,selMCs,useMC,fyMode);
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+        const fname=`Purchase file_${ds}.xlsx`;
+        XLSX.writeFile(wb,fname);
+        log(`✓ Downloaded: ${fname} (${S.csv.length.toLocaleString()} rows)`,'ok');
+        count++;
+      }
+
+      // Output 2 — Packing Items (Packing Item column non-empty)
+      if(document.getElementById('o2').checked){
+        const rows=S.csv.filter(r=>String(r[iPacking]||'').trim()!=='');
+        const ws=buildSheet(rows,selMCs,useMC,fyMode);
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+        const fname=`Packing Items_${ds}.xlsx`;
+        XLSX.writeFile(wb,fname);
+        log(`✓ Downloaded: ${fname} (${rows.length.toLocaleString()} rows)`,'ok');
+        count++;
+      }
+
+      // Output 3 — Packing Suspense (Party Name contains "suspense")
+      if(document.getElementById('o3').checked){
+        const rows=S.csv.filter(r=>String(r[iParty]||'').toLowerCase().includes('suspense'));
+        const ws=buildSheet(rows,selMCs,useMC,fyMode);
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+        const fname=`Packing Suspense_${ds}.xlsx`;
+        XLSX.writeFile(wb,fname);
+        log(`✓ Downloaded: ${fname} (${rows.length.toLocaleString()} rows)`,'ok');
+        count++;
+      }
+
+      // Output 4 — Daily Items (Inlet Channel contains "daily")
+      if(document.getElementById('o4').checked){
+        const rows=S.csv.filter(r=>String(r[iInlet]||'').toLowerCase().includes('daily'));
+        const ws=buildSheet(rows,selMCs,useMC,fyMode);
+        const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+        const fname=`Daily Items_${ds}.xlsx`;
+        XLSX.writeFile(wb,fname);
+        log(`✓ Downloaded: ${fname} (${rows.length.toLocaleString()} rows)`,'ok');
+        count++;
+      }
+
+      if(useMC) log(`  Closing Stock = ${selMCs.join(' + ')}`,'ok');
+      log(`─── Done! ${count} file(s) downloaded. Open in Excel — formulas auto-calculate ───`,'ok');
+      const t=document.getElementById('toast');
+      t.textContent=`✓ ${count} file(s) downloaded!`;
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),4000);
+    }catch(err){
+      log(`❌ ${err.message}`,'err');console.error(err);
+    }
+    btn.classList.remove('loading');btn.disabled=false;
+  },60);
+}
+</script>
+</body>
+</html>

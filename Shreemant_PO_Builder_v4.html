@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant — PO Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f4f1;--surf:#fff;--surf2:#f0eeeb;--bdr:#ddd9d4;--bdr2:#ccc8c2;--red:#b91c1c;--red-dim:rgba(185,28,28,.07);--txt:#1a1a1a;--muted:#777;--dim:#aaa;--green:#15803d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+.hdr{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:10}
+.logo{font-weight:700;font-size:17px}.logo span{color:var(--red)}
+.hdr-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:var(--surf2);border:1px solid var(--bdr);padding:3px 9px;border-radius:20px}
+.main{max-width:620px;margin:0 auto;padding:28px 20px 80px}
+
+/* LOADING */
+.ls{text-align:center;padding:56px 20px}
+.ls-icon{font-size:38px;margin-bottom:14px;display:inline-block;animation:spin 2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-title{font-weight:700;font-size:17px;margin-bottom:7px}
+.ls-sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.ls-bar-w{background:var(--bdr);border-radius:4px;height:6px;overflow:hidden;max-width:300px;margin:0 auto}
+.ls-bar{height:100%;background:var(--red);border-radius:4px;transition:width .4s;width:0}
+.ls-step{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:9px}
+.ls-note{margin-top:18px;padding:11px 14px;background:#fffbf5;border:1px solid #e5d4a8;border-radius:8px;font-size:11.5px;color:#92400e;max-width:360px;margin-left:auto;margin-right:auto}
+
+/* CARD */
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:11px;padding:20px;margin-bottom:12px}
+.card-title{font-weight:700;font-size:12.5px;color:var(--txt);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-title::before{content:'';width:3px;height:13px;background:var(--red);border-radius:2px;flex-shrink:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600}
+input[type="number"]{background:var(--surf2);border:1px solid var(--bdr2);border-radius:7px;padding:9px 11px;color:var(--txt);font-family:'DM Mono',monospace;font-size:14px;width:100%;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--red)}
+.hint{font-size:10px;color:var(--dim)}
+
+/* UPLOAD */
+.upz{border:2px dashed var(--bdr2);border-radius:9px;padding:26px 18px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upz:hover,.upz.on{border-color:var(--red);background:var(--red-dim)}
+.upz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upz-icon{font-size:22px;margin-bottom:5px}
+.upz-title{font-weight:600;font-size:13px;margin-bottom:2px}
+.upz-sub{font-size:11px;color:var(--muted)}
+.fok{display:none;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.2);border-radius:7px;padding:8px 11px;margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--green)}
+
+/* BUTTONS */
+.btn{width:100%;padding:13px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 5px 16px rgba(185,28,28,.25)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-dl{display:none;width:100%;padding:12px;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.25);border-radius:8px;color:var(--green);font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:background .2s;align-items:center;justify-content:center;gap:8px;margin-top:9px}
+.btn-dl.show{display:flex}
+.btn-dl:hover{background:rgba(21,128,61,.14)}
+
+.pw{display:none;margin-top:10px}
+.pt{height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.pb{height:100%;background:linear-gradient(90deg,var(--red),#d97706);border-radius:2px;transition:width .3s;width:0}
+.ptxt{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--muted)}
+.status{margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-height:16px}
+.status.ok{color:var(--green)}.status.err{color:var(--red)}
+.stats{display:none;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}
+.stats.show{display:grid}
+.stat{background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:9px 7px;text-align:center}
+.sv{font-weight:800;font-size:20px;color:var(--txt)}
+.sv.r{color:var(--red)}.sv.o{color:#c2410c}.sv.g{color:var(--green)}
+.sl{font-size:9px;text-transform:uppercase;color:var(--dim);letter-spacing:.4px;margin-top:1px}
+.footer{text-align:center;font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">श्रीमंत <span>PO Builder</span></div>
+  <div class="hdr-tag">Pyodide v0.27 · Python in Browser</div>
+</div>
+<div class="main">
+
+<div class="ls" id="ls">
+  <div class="ls-icon">⚙</div>
+  <div class="ls-title">Setting up Python environment...</div>
+  <div class="ls-sub">First time only · Takes ~30 seconds · Cached forever after</div>
+  <div class="ls-bar-w"><div class="ls-bar" id="lsBar"></div></div>
+  <div class="ls-step" id="lsStep">Loading Pyodide...</div>
+  <div class="ls-note">⚡ Browser caches Pyodide after first load. Next time opens in under 3 seconds from cache.</div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="card">
+    <div class="card-title">Session Parameters</div>
+    <div class="g2">
+      <div class="field">
+        <label class="fl">Slow Moving Items — Window (days)</label>
+        <input type="number" id="sw" value="7" min="1" max="60">
+        <div class="hint">All items except oils &amp; sugar</div>
+      </div>
+      <div class="field">
+        <label class="fl">Fast Moving Items — Window (days)</label>
+        <input type="number" id="fw" value="5" min="1" max="30">
+        <div class="hint">Edible oils &amp; sugar/shakkar only</div>
+      </div>
+      <div class="field">
+        <label class="fl">Slow Items — Multiplier</label>
+        <input type="number" id="sm" value="0.55" min="0.1" max="2" step="0.05">
+        <div class="hint">e.g. 0.55 = 55% of normal demand</div>
+      </div>
+      <div class="field">
+        <label class="fl">Fast Items — Multiplier</label>
+        <input type="number" id="fm" value="0.55" min="0.1" max="2" step="0.05">
+        <div class="hint">Usually same as slow</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Upload Purchase File</div>
+    <div class="upz" id="upz" ondragover="event.preventDefault();this.classList.add('on')" ondragleave="this.classList.remove('on')" ondrop="doDrop(event)">
+      <input type="file" id="fi" accept=".xlsx" onchange="handleFile(this.files[0])">
+      <div class="upz-icon">📁</div>
+      <div class="upz-title">Drop Purchase File here</div>
+      <div class="upz-sub">Same .xlsx exported from Busy · Sheet1 with all computed columns</div>
+    </div>
+    <div class="fok" id="fok"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Generate</div>
+    <button class="btn" id="genBtn" onclick="runGen()" disabled><span>⚡</span> Generate All-Party PO Dashboard</button>
+    <div class="pw" id="pw"><div class="pt"><div class="pb" id="pb"></div></div><div class="ptxt" id="ptxt">Starting...</div></div>
+    <div class="status" id="status"></div>
+    <div class="stats" id="stats">
+      <div class="stat"><div class="sv" id="stP">—</div><div class="sl">Parties</div></div>
+      <div class="stat"><div class="sv r" id="stO">—</div><div class="sl">Order</div></div>
+      <div class="stat"><div class="sv o" id="stD">—</div><div class="sl">Decide</div></div>
+      <div class="stat"><div class="sv g" id="stN">—</div><div class="sl">No Order</div></div>
+    </div>
+    <button class="btn-dl" id="dlBtn" onclick="triggerDl()"><span>📥</span> Download PO Dashboard Excel</button>
+  </div>
+  <div class="footer">Shreemant Apna Bazar · gen_v6 logic · Python in browser · No server needed</div>
+</div>
+</div>
+
+<script id="pyCode" type="text/x-python">
+import openpyxl, math, io
+from openpyxl.styles import PatternFill, Font, Alignment
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+from datetime import date, timedelta, datetime
+from collections import defaultdict
+
+TODAY = date.today()
+FAST_KW = ['fortune soya','fortune sunlite','fortune sarso','fortune ricebran','fortune sun lite','fortune suger','fortune sugar','mahakosh soya','khanpan soya','khanpan 5l','dharti maa','dhara ricebran','dammani','krati 5l','saffola gold','patanjali sarso oil','raag dalda','madhur sugar','madhur suger','shakkar']
+MIN_BAG = {'420 idli mix 500g':60,'aaram agarbati 10 sticks':12,'active wheel powder 1kg':25,'active wheel powder 2kg':12,'aim machis 1n':60,'amul pure ghee tetra pack 1lt':12,'bafla aata 1kg':30,'bateli tea 1 kg':20,'bateli tea 250gm':80,'britannia good day cashew cookies 60gm':84,'britannia jimjam pops biscuit 350gm':12,'britannia little hearts 75g':48,'britannia marie gold 78gm':96,'britannia marie gold biscuit 250gm':36,'britannia nutri choice biscuits 1kg':6,'cadbury bourn vita pouch 75gm':196,"ching's schezwan chutney 250gm":24,"ching's schezwan chutney 600gm":6,'cinthol lime soap 4+1':30,'clinic plus shampoo pouch combo 6ml*16':60,'colin spray 250ml':96,'commandant atta 5kg':6,'commander maida 1kg':30,'commander maida 500gm':60,'commander rawa 1kg':30,'commander rawa 500gm':60,'dammani groundnut oil 5l':4,'dark fantasy bourbon 58.5g 10rs':120,'dark fantasy choco fills 75gm':12,'denver deo hamilton 150 ml':6,'denver deo victor 165 ml':6,'dettol handwash 210 ml buy 1 get 1':24,'dettol antiseptic liquid 550ml':24,'dettol antiseptic liquid 60ml':12,'dettol cologne soap 4 set':42,'dettol liquid 125ml':96,'dettol original 4*125gm':42,'dettol skin care soap 5 set':36,'dhara ricebran 1 lit':12,'dharti maa groundnut 450gm':30,'dharti maa groundnut oil 900gm':20,'dharti maa sarso oil 200ml':80,'dharti maa sarso oil 450gm':30,'dharti maa sarso oil 900g':20,'dharti maa tilli oil 450 gm':30,'dharti maa tilli oil 900gm':20,'docter phenyle 5lt':4,'double diamond tea 250g':12,'double diamond tea 500g':12,'dove soap (4+1)*125g':24,'everest chat masala 100gm':10,'everest chat masala 50g':10,'everest garam masala 100gm':10,'everest garam masala 50gm':10,'fena mahabar soap 240gm':60,'fena super wash powder surf 5kg':6,'fiama soap combo pack':20,'figaro olive oil 100ml':12,'fortune rice brain oil 5lt':4,'fortune sarso 5l':4,'fortune soya oil pouch 1lt':16,'fortune suger 1kg':25,'fortune sun lite oil 5lt':4,'fortune sun lite oil pouch 1lt':16,'gangwal idli mix 500g':60,'ghadi machine wash 1kg':12,'ghadi soap rs10':56,'ghadi soap rs5':100,'ghadi washing powder 1kg':25,'ghadi washing powder 3kg':10,'ghadi washing powder 500g':40,'ghadi wasingh wash 5kg':5,'godrej no.1 lime soap 4+1':36,'good night gold flash 45ml*4 reffills':12,'harpic blue original 200ml':48,'harpic blue original 500ml':24,'harpic red 250ml':48,'harpic red 500ml':24,'harpic ws bleach toilet clean 500ml':24,'harpic ws bleach toilet cleaner 1ltr.':16,'hasty tasty paper poha 500gm':32,'hasty tasty poha 1kg':30,'home lite machis pack 10n':60,'home lite match box 1n':100,'india gate basmati rice dubar 1kg':20,'india gate everyday basmati rice 5kg':4,'india gate rice dubar 5kg':4,'india gate rice mogra 1kg':20,'india gate rice mogra 5kg':4,'india gate rice tibar 1kg':20,'kinley drinking water 500ml':24,'kissan mixed fruit jam 500g':12,'kissan tomato ketchup 500gm':24,'krati 5l(new packing)':4,'lifebuoy total soap set (4*52)':54,'lizol flore cleaner 500ml':24,'lizol flore cleaner 975ml':16,'lux jasmine soap 4+1':30,'lux lotus soap 3+1':36,'madhur sugar 1kg':25,'madhur suger m 5kg':5,'maggi atta noodles 290gm 12% 4 pack':24,'maggi masala rs5':60,'maggi noodles 70gm':96,'mahakosh soya oil pouch 1ltr':12,'makhana 100gm':100,'makhana 250gm':40,'margo neem soap 400+100gm':36,'mayur aatta 5kg':6,'mayura malkist cheese biscuits 144gm':60,'natural nuts hing chana 500gm':40,'natural nuts rosted chana regular 500gm':50,'nirma green soap 5*100gm':20,'parle g original gluco biscuits 100g':72,'parle happy happy choco chip 60gm':96,'parle krackjack biscuit 119gm':72,'parle krackjack biscuit 700gm':7,'parle monaco 700gm':7,'parle monaco classic biscuit 200gm':42,'parle-g biscuit 800gm':16,'parle-g gold 1kg':14,'parle-g gold biscuit 75gm':72,'parle-g gold biscuits 475gm':28,'parle-g original gluco biscuits 200+50g':48,'patanjali coconut biscuit rs10':100,'patanjali chatpata aata noodles60gm':96,'patanjali cow ghee box 1lt':15,'patanjali cow ghee box 200ml':30,'patanjali milk biscuit rs10':100,'patanjali milk biscuits 800g':14,'patanjali neem soap 5 set':36,'patanjali sarso oil 1ltr':12,'patanjali sarso oil 500ml':24,'patanjali shampoo pouch 6*16':60,'patanjali super dishwash bar 145gm':60,'pitambari dw 700gm':16,'pitambari shining powder 150g.':60,'puro helthy salt 1kg':16,'raag dalda 500ml':32,'red label 100gm':24,'red label tea 1kg.':12,'red label tea box 500gm':24,'rimsa fresh floor cleaner 1ltr':24,'rimsa fresh floor cleaner 5ltr':4,'rin big bar soap 4*250gm':12,'rin soap 130gm 10rs':84,'rin washing powder 1kg':25,'rin washing powder 5kg':6,'sachamoti premium sabudana 500gm':60,'saffola gold oil 1lt pouch':16,'sanchi ghee box 1ltr':16,'santoor almond soap 4 set':36,'shakkar 1kg':50,'sm chawla dal 500g.':60,'sm chawla khada 500g (mg)':60,'sm desi chana khada 500gm (mg)':60,'sm masoor daal 500gm (mg)':60,'sm masoor khadi 500gm (mg)':60,'sm moong chilka 500gm (mg)':60,'sm moong khada 500gm (mg)':60,'sm moth 500gm (mg)':60,'sm urad dal chilka 500gm':60,'surf excel quick wash 1kg':16,'surf excel soap 10rs.':140,'surf excel soap 4*200g':20,'swaminarayan aata 500gm':80,'swastik poha 1kg':20,'tata rock salt 1kg':18,'tata salt 1kg':30,'tide bar 200gm*10':12,'tide jasmine & rose washing poweder 1kg':24,'tide jasmine&rose 5kg':5,'tide naturals 500gm':48,'tide white bar 155gm':72,'unity biryani basmati rice 1kg':20,'varalakshmi barik sabudana 500gm':60,'varalakshmi mota sabudana 500g':60}
+
+C_DARK_BLUE='FF1F3864';C_MID_BLUE='FF2E75B6';C_LIGHT_BLUE='FFEBF3FB';C_BROWN='FF833C00';C_GREEN='FF375623';C_RED='FFC00000';C_PURPLE='FF7030A0';C_BLUE2='FF4472C4';C_GOLD='FFBF8F00';C_ORANGE='FFCC6600';C_PARTY_BLUE='FF0563C1';C_WHITE='FFFFFFFF';C_GREY_TOTAL='FFD9D9D9';C_LIGHT_GREY='FFD9E1F2';C_FAFAFF='FFFAFAFF';C_YELLOW='FFFFF2CC';C_OOS='FFFFDAD9';C_SHORTFALL='FFFCE4D6';C_HASH='FFFFF2CC';C_DORMANT='FFEDE7F6';C_DISC='FFE8E8E8';C_OVERSTOCK='FFE2EFDA';C_YES_FILL='FFFFC7CE';C_YES_FONT='FF9C0006'
+def F(c): return PatternFill('solid',fgColor=c)
+def FN(bold=False,color='FF000000',size=11,italic=False,underline=None): return Font(bold=bold,color=color,size=size,italic=italic,underline=underline if underline else None)
+def AL(h='left',wrap=False): return Alignment(horizontal=h,vertical='center',wrap_text=wrap)
+def IHL(sn): return f"#'{sn}'!A1"
+def csn(name):
+    for c in ['\\','/', '?','*','[',']',"'",':']: name=name.replace(c,'')
+    return name[:31].strip()
+def is_fast(i): return any(k in i.lower() for k in FAST_KW)
+def get_mb(i):
+    il=i.lower()
+    for k,v in MIN_BAG.items():
+        if k in il: return v
+    return 1
+def rb(n,b): return math.ceil(n/b)*b if n>0 and b>1 else max(1,math.ceil(n))
+def nh(c,hl):
+    v=sorted(set(h for h in hl if h>0))
+    return min(v,key=lambda x:abs(x-c)) if v else None
+
+# READ EXCEL
+wb_in=openpyxl.load_workbook(io.BytesIO(bytes(INPUT_BYTES)),data_only=True)
+ws_name=wb_in.sheetnames[0]
+for sn in wb_in.sheetnames:
+    ws_t=wb_in[sn]
+    if ws_t.max_row>500: ws_name=sn; break
+ws_in=wb_in[ws_name]
+headers=[cell.value for cell in ws_in[1]]
+N=len(headers)
+party_rows=defaultdict(list); item_history=defaultdict(list)
+for row in ws_in.iter_rows(min_row=2,values_only=True):
+    if not row[1]: continue
+    outlet=str(row[15] if len(row)>15 and row[15] else '').strip()
+    if outlet=='Mitravinda': continue
+    rd={headers[i]:row[i] for i in range(min(len(headers),len(row)))}
+    p=str(row[1]).strip(); party_rows[p].append(rd)
+    it=str(row[2]).strip() if row[2] else ''; q=row[3]
+    if it and q and isinstance(q,(int,float)) and q>0: item_history[(p,it)].append(q)
+party_latest={}
+for p,rs in party_rows.items():
+    L={}
+    for r in rs:
+        it=str(r.get('Item Name','') or '').strip()
+        if it: L[it]=r
+    party_latest[p]=L
+PARTIES=sorted(party_rows.keys())
+data={'headers':headers,'party_rows':dict(party_rows),'party_latest':party_latest,'item_history':dict(item_history),'parties':PARTIES}
+print(f"Loaded: {len(PARTIES)} parties")
+
+# PROCESS
+def process(party):
+    res=[]
+    for item,row in party_latest.get(party,{}).items():
+        is_hash=item.startswith('#')
+        sm=float(row.get('Sale/month') or 0); cl=float(row.get('Closing Stock') or 0)
+        ov=str(row.get('Overstock ') or row.get('Overstock') or '').strip(); un=str(row.get('Understock') or '').strip()
+        pk=str(row.get('Packing Item') or '').strip().lower(); ic_val=str(row.get('Inlet Channel') or '').strip(); bt=str(row.get('Beat Day') or '').strip()
+        bd=row.get('Bill Date')
+        if isinstance(bd,datetime): ld=bd.date()
+        elif isinstance(bd,date): ld=bd
+        else: ld=None
+        hist=item_history.get((party,item),[])
+        fast=is_fast(item); win=FAST_WINDOW if fast else SLOW_WINDOW; mult=FAST_MULT if fast else SLOW_MULT; adj=((sm/30*win)-cl)*mult
+        sq=0; reason=''; color=C_WHITE; decide=False; status='SUFFICIENT'; is_pk=(pk=='packing item')
+        if ov and ov not in [' ','']:
+            status='OVERSTOCK';sq=0;color=C_OVERSTOCK;reason=f'No order - Overstock: {ov}. Stock={cl}'
+        elif is_hash:
+            status='HASH';color=C_HASH;decide=True;cutoff=TODAY-timedelta(days=90);recent=ld and ld>=cutoff;cd=round(max(0,adj),1);months=(TODAY-ld).days/30 if ld else 0
+            sq=(f'X {cd}pcs - Hash, Not Bought {round(months,1)}mo' if not recent else f'OK {cd}pcs - Hash, Bought Recently');reason=f'Hash - decide. Calc={cd} | MinBag={get_mb(item)} | W={win}d'
+        elif ld and (TODAY-ld).days>180:
+            status='DISCONTINUED';color=C_DISC;decide=True;months=(TODAY-ld).days/30;sq=f'0 - Likely Discontinued ({round(months,1)}mo ago). Add # mark?';reason=f'Not purchased in {round(months,1)} months.'
+        elif ld and 90<(TODAY-ld).days<=180:
+            status='DORMANT';color=C_DORMANT;decide=True;months=(TODAY-ld).days/30;sq=f'0pcs - Dormant ({round(months,1)}mo). Review.';reason=f'Last purchased {round(months,1)} months ago.'
+        elif cl==0 and sm==0:
+            status='ZERO_DEMAND';color=C_HASH;decide=True;sq=0;reason='OOS but Sale/month=0.'
+        elif cl==0 and adj>0:
+            status='OOS';color=C_OOS;bag=get_mb(item);h=nh(adj,hist)
+            if h:
+                gap=abs(adj-h)/h*100
+                if gap>50: decide=True;dir_='<' if adj<h else '>';sq=f'{int(h)}pcs - Gap({round(adj,1)} {dir_} {int(h)})';reason=f'GAP {round(gap)}%. Decide.'
+                else: sq=rb(h,bag);reason=f'OOS. W={win}d,mult={mult},adj={round(adj,1)}.Order={sq}pcs.'
+            else: sq=rb(adj,bag);reason=f'OOS. adj={round(adj,1)}. Order={sq}pcs.'
+        elif 0<adj<1:
+            status='FRACTIONAL';color=C_HASH;decide=True;sq=f'{round(adj,2)}pcs - Very low demand.';reason=f'Fractional. adj={round(adj,2)}'
+        elif adj>=1:
+            status='SHORTFALL';color=C_SHORTFALL;bag=get_mb(item);h=nh(adj,hist)
+            if h:
+                gap=abs(adj-h)/h*100
+                if gap>50: decide=True;dir_='<' if adj<h else '>';sq=f'{int(h)}pcs - Gap({round(adj,1)} {dir_} {int(h)})';reason=f'GAP {round(gap)}%. Decide.'
+                else: sq=rb(h,bag);reason=f'Shortfall. W={win}d,mult={mult},adj={round(adj,1)}->{sq}pcs'
+            else: sq=rb(adj,bag);reason=f'Shortfall. adj={round(adj,1)}->{sq}pcs'
+        else: status='SUFFICIENT';sq=0;color=C_WHITE;reason=f'No order. Stock={cl}'
+        urg={'OOS':0,'SHORTFALL':1,'HASH':2,'ZERO_DEMAND':2,'FRACTIONAL':2,'DISCONTINUED':3,'DORMANT':3,'SUFFICIENT':9,'OVERSTOCK':10}.get(status,9)
+        res.append({'item':item,'status':status,'sq':sq,'reason':reason,'color':color,'decide':decide,'win':win,'mult':mult,'adj':adj,'closing':cl,'sale_m':sm,'urgency':urg,'is_pk':is_pk,'inlet':ic_val,'beat':bt,'overst':ov,'underst':un,'party':party,'last_dt':ld,'row':row})
+    res.sort(key=lambda x:x['urgency']); return res
+
+all_results={}; party_stats={}
+for p in PARTIES:
+    res=process(p); all_results[p]=res
+    s={'total':len(res),'order':sum(1 for r in res if isinstance(r['sq'],int) and r['sq']>0),'decide':sum(1 for r in res if r['decide']),'no':sum(1 for r in res if isinstance(r['sq'],int) and r['sq']==0 and not r['decide']),'beat':res[0]['beat'] if res else '-'}
+    u=(s['order']/s['total']*100+s['decide']/s['total']*50) if s['total'] else 0
+    s['priority']='High' if u>=30 else ('Moderate' if u>=10 else 'Low')
+    s['pri_bg']=C_OOS if u>=30 else (C_SHORTFALL if u>=10 else C_OVERSTOCK)
+    party_stats[p]=s
+print(f"Processed {len(PARTIES)} parties")
+
+# BUILD EXCEL
+wb=openpyxl.Workbook(); del wb['Sheet']
+NEW_H=['Window(d)','Multiplier','Calc Need','Suggested Qty','Reason','Your Final Qty','Your Reason']
+NEW_BG=[C_GREEN,C_GREEN,C_GREEN,C_BROWN,C_PURPLE,C_GREEN,C_GREEN]
+HDR_BG={**{i:C_DARK_BLUE for i in range(1,21)},**{i:'FF4472C4' for i in range(21,23)},**{i:'FF2F6797' for i in range(23,40)},**{i:C_RED for i in range(40,44)},44:C_GREEN}
+HIDE_COLS=[4]+list(range(6,21))+list(range(39,44))
+party_sheet_map={}; used_names=set()
+for p in PARTIES:
+    base=csn(p)
+    if base in used_names:
+        i=2
+        while f"{base[:28]}{i}" in used_names: i+=1
+        base=f"{base[:28]}{i}"
+    party_sheet_map[p]=base; used_names.add(base)
+
+def write_po_header(ws,title,subtitle,back_sheet,back_label='HOME'):
+    col_end=get_column_letter(N+7)
+    c=ws.cell(1,1,back_label); c.hyperlink=IHL(back_sheet); c.font=FN(bold=True,color=C_PARTY_BLUE,size=11,underline='single'); ws.row_dimensions[1].height=20
+    ws.merge_cells(f'A2:{col_end}2'); c=ws.cell(2,1,title); c.fill=F(C_DARK_BLUE); c.font=FN(bold=True,color=C_WHITE,size=11); c.alignment=AL('center'); ws.row_dimensions[2].height=22
+    ws.merge_cells(f'A3:{col_end}3'); c=ws.cell(3,1,subtitle); c.fill=F(C_MID_BLUE); c.font=FN(color=C_WHITE,size=11); c.alignment=AL('center'); ws.row_dimensions[3].height=20
+    for ci,h in enumerate(headers,1):
+        c=ws.cell(4,ci,h); c.fill=F(HDR_BG.get(ci,C_DARK_BLUE)); c.font=FN(bold=True,color=C_WHITE,size=11); c.alignment=AL('center',wrap=True)
+    for i,h in enumerate(NEW_H):
+        c=ws.cell(4,N+1+i,h); c.fill=F(NEW_BG[i]); c.font=FN(bold=True,color=C_WHITE,size=11); c.alignment=AL('center',wrap=True)
+    ws.row_dimensions[4].height=28; return 5
+
+def write_po_rows_filtered(ws,party,filtered_items_set,result_map,start_row):
+    all_rows=data['party_rows'].get(party,[])
+    last_pos={str(r.get('Item Name','') or '').strip():i for i,r in enumerate(all_rows)}
+    item_order={r['item']:i for i,r in enumerate(all_results[party]) if r['item'] in filtered_items_set}
+    frows=[(i,row) for i,row in enumerate(all_rows) if str(row.get('Item Name','') or '').strip() in filtered_items_set]
+    sorted_rows=sorted(frows,key=lambda x:(item_order.get(str(x[1].get('Item Name','') or '').strip(),999),x[0]))
+    rn=start_row
+    for oi,row in sorted_rows:
+        item=str(row.get('Item Name','') or '').strip(); is_last=(oi==last_pos.get(item)); r=result_map.get(item)
+        for ci,h in enumerate(headers,1):
+            v=row.get(h); cell=ws.cell(rn,ci,v)
+            if isinstance(v,(datetime,date)): cell.number_format='mm-dd-yy'
+        for ci,h in enumerate(headers,1):
+            if str(row.get(h,'') or '').strip().lower()=='yes':
+                ws.cell(rn,ci).fill=PatternFill('solid',fgColor=C_YES_FILL); ws.cell(rn,ci).font=Font(color=C_YES_FONT,size=11)
+        if is_last and r:
+            sq=r['sq']; rf=F(r['color']) if r['color']!=C_WHITE else None
+            for off in range(1,8):
+                if rf: ws.cell(rn,N+off).fill=rf
+            ws.cell(rn,N+1,r['win']); ws.cell(rn,N+2,r['mult']); ws.cell(rn,N+3,round(r['adj'],2))
+            sc=ws.cell(rn,N+4,sq); sc.alignment=AL('center',wrap=True)
+            if isinstance(sq,int) and sq>0: sc.font=FN(bold=True,color=C_RED,size=11)
+            elif isinstance(sq,int): sc.font=FN(color=C_GREEN,size=11)
+            else: sc.font=FN(color=C_RED,size=11)
+            ws.cell(rn,N+5,r['reason']); ws.cell(rn,N+6,''); ws.cell(rn,N+7,'')
+        ws.row_dimensions[rn].height=20; rn+=1
+    return rn
+
+def apply_po_widths(ws):
+    ws.column_dimensions['A'].width=12; ws.column_dimensions['B'].width=22; ws.column_dimensions['C'].width=38
+    for c in range(4,N+1): ws.column_dimensions[get_column_letter(c)].width=8
+    ws.column_dimensions[get_column_letter(N+4)].width=30; ws.column_dimensions[get_column_letter(N+5)].width=50
+    ws.column_dimensions[get_column_letter(N+6)].width=16; ws.column_dimensions[get_column_letter(N+7)].width=20
+    for col in HIDE_COLS: ws.column_dimensions[get_column_letter(col)].hidden=True
+    ws.freeze_panes=ws['E5']
+
+def color_legend_rows(ws,sr):
+    ws.row_dimensions[sr].height=8; r=sr+1
+    ws.merge_cells(f'A{r}:G{r}'); c=ws.cell(r,1,'Window & Multiplier'); c.fill=F(C_DARK_BLUE); c.font=FN(bold=True,color=C_WHITE,size=11); ws.row_dimensions[r].height=20; r+=1
+    ws.merge_cells(f'A{r}:G{r}'); c=ws.cell(r,1,f'Fast(Oils/Sugar): {FAST_WINDOW}dx{FAST_MULT} | Slow(others): {SLOW_WINDOW}dx{SLOW_MULT}'); c.fill=F(C_GREY_TOTAL); c.font=FN(size=11); ws.row_dimensions[r].height=20; r+=1
+    ws.merge_cells(f'A{r}:G{r}'); c=ws.cell(r,1,'Row Color Legend'); c.fill=F(C_DARK_BLUE); c.font=FN(bold=True,color=C_WHITE,size=11); ws.row_dimensions[r].height=20; r+=1
+    for bg,txt,fc in [(C_OOS,'Out of Stock','FF000000'),(C_SHORTFALL,'Shortfall','FF000000'),(C_HASH,'Hash/ZeroDemand/LowDemand','FFFF0000'),(C_DORMANT,'Dormant (3-6mo)','FF000000'),(C_DISC,'Discontinued (>6mo)','FF000000'),(C_OVERSTOCK,'Overstocked','FF000000')]:
+        ws.merge_cells(f'A{r}:G{r}'); c=ws.cell(r,1,txt); c.fill=F(bg); c.font=FN(color=fc,size=11); ws.row_dimensions[r].height=20; r+=1
+
+print("Writing party sheets...")
+for party in PARTIES:
+    s=party_stats[party]; sname_p=party_sheet_map[party]; ws=wb.create_sheet(sname_p)
+    beat_sheet=csn(f"{s['beat']} Beat")
+    dr=write_po_header(ws,f'PO - {party.upper()}',f'{TODAY.strftime("%d-%b-%Y")}  |  {s["priority"]}  |  Items:{s["total"]}  |  Order:{s["order"]}  |  Decide:{s["decide"]}',beat_sheet,'HOME')
+    all_rows=data['party_rows'].get(party,[]); last_pos={str(r.get('Item Name','') or '').strip():i for i,r in enumerate(all_rows)}
+    result_map={r['item']:r for r in all_results[party]}; item_order={r['item']:i for i,r in enumerate(all_results[party])}
+    sorted_rows=sorted(enumerate(all_rows),key=lambda x:(item_order.get(str(x[1].get('Item Name','') or '').strip(),999),x[0]))
+    rn=dr
+    for oi,row in sorted_rows:
+        item=str(row.get('Item Name','') or '').strip(); is_last=(oi==last_pos.get(item)); r=result_map.get(item)
+        for ci,h in enumerate(headers,1):
+            v=row.get(h); cell=ws.cell(rn,ci,v)
+            if isinstance(v,(datetime,date)): cell.number_format='mm-dd-yy'
+        for ci,h in enumerate(headers,1):
+            if str(row.get(h,'') or '').strip().lower()=='yes':
+                ws.cell(rn,ci).fill=PatternFill('solid',fgColor=C_YES_FILL); ws.cell(rn,ci).font=Font(color=C_YES_FONT,size=11)
+        if is_last and r:
+            sq=r['sq']; rf=F(r['color']) if r['color']!=C_WHITE else None
+            for off in range(1,8):
+                if rf: ws.cell(rn,N+off).fill=rf
+            ws.cell(rn,N+1,r['win']); ws.cell(rn,N+2,r['mult']); ws.cell(rn,N+3,round(r['adj'],2))
+            sc=ws.cell(rn,N+4,sq); sc.alignment=AL('center',wrap=True)
+            if isinstance(sq,int) and sq>0: sc.font=FN(bold=True,color=C_RED,size=11)
+            elif isinstance(sq,int): sc.font=FN(color=C_GREEN,size=11)
+            else: sc.font=FN(color=C_RED,size=11)
+            ws.cell(rn,N+5,r['reason']); ws.cell(rn,N+6,''); ws.cell(rn,N+7,'')
+        ws.row_dimensions[rn].height=20; rn+=1
+    apply_po_widths(ws)
+
+print("Writing beat sheets...")
+beat_map=defaultdict(list)
+for p in PARTIES: beat_map[party_stats[p]['beat']].append(p)
+beat_sheet_names={}
+for beat,bps in sorted(beat_map.items()):
+    sname=csn(f'{beat} Beat'); beat_sheet_names[beat]=sname; ws=wb.create_sheet(sname)
+    ws.merge_cells('A1:G1'); c=ws.cell(1,1,f'PO - {beat.upper()} BEAT ({len(bps)})'); c.fill=F(C_DARK_BLUE); c.font=FN(bold=True,color=C_WHITE,size=13); c.alignment=AL('center'); ws.row_dimensions[1].height=26
+    ws.merge_cells('A2:G2'); c=ws.cell(2,1,f'Date:{TODAY.strftime("%d-%b-%Y")} | Fast={FAST_WINDOW}dx{FAST_MULT} | Slow={SLOW_WINDOW}dx{SLOW_MULT}'); c.fill=F(C_MID_BLUE); c.font=FN(color=C_WHITE,size=11); c.alignment=AL('center'); ws.row_dimensions[2].height=20
+    ws.merge_cells('A3:G3'); c=ws.cell(3,1,'Click party name to open PO | HOME to return'); c.fill=F(C_LIGHT_BLUE); c.font=FN(size=8); ws.row_dimensions[3].height=16
+    ws.row_dimensions[4].height=8
+    for ci,h in enumerate(['Sr','Party Name','Total','Order','No Order','Decide','Priority'],1):
+        c=ws.cell(5,ci,h); c.fill=F(C_DARK_BLUE); c.font=FN(bold=True,color=C_WHITE,size=11); c.alignment=AL('center' if ci!=2 else 'left')
+    ws.row_dimensions[5].height=22
+    for idx_p,p in enumerate(bps):
+        s=party_stats[p]; rn=6+idx_p; ws.cell(rn,1,idx_p+1).font=FN(size=11)
+        c=ws.cell(rn,2,f'-> {p}'); c.hyperlink=IHL(party_sheet_map[p]); c.font=FN(bold=True,color=C_PARTY_BLUE,size=11)
+        ws.cell(rn,3,s['total']).alignment=AL('center'); ws.cell(rn,3).font=FN(size=11)
+        oc=ws.cell(rn,4,s['order']); oc.alignment=AL('center'); oc.font=FN(bold=s['order']>0,color=C_RED if s['order']>0 else 'FF000000',size=11)
+        nc=ws.cell(rn,5,s['no']); nc.alignment=AL('center'); nc.font=FN(color=C_GREEN,size=11)
+        dc=ws.cell(rn,6,s['decide']); dc.alignment=AL('center'); dc.font=FN(bold=s['decide']>0,color=C_GOLD if s['decide']>0 else 'FF000000',size=11)
+        ws.cell(rn,7,s['priority']).alignment=AL('center'); ws.cell(rn,7).font=FN(size=11); ws.row_dimensions[rn].height=22
+    tr=5+len(bps)+1
+    for ci in range(1,8): ws.cell(tr,ci,'').fill=F(C_GREY_TOTAL)
+    ws.cell(tr,2,'TOTAL').fill=F(C_GREY_TOTAL); ws.cell(tr,2).font=FN(bold=True,size=11)
+    for ci,val,col in [(3,sum(party_stats[p]['total'] for p in bps),'FF000000'),(4,sum(party_stats[p]['order'] for p in bps),C_RED),(5,sum(party_stats[p]['no'] for p in bps),C_GREEN),(6,sum(party_stats[p]['decide'] for p in bps),C_GOLD)]:
+        c=ws.cell(tr,ci,val); c.fill=F(C_GREY_TOTAL); c.font=FN(bold=True,color=col,size=11); c.alignment=AL('center')
+    ws.row_dimensions[tr].height=22; color_legend_rows(ws,tr+1)
+    ws.column_dimensions['A'].width=6; ws.column_dimensions['B'].width=36
+    for col in 'CDEFG': ws.column_dimensions[col].width=13
+    ws.freeze_panes=ws['B6']
+
+print("Writing sections...")
+ws_pk=wb.create_sheet('Packing Items')
+pk_set={r['item'] for p in PARTIES for r in all_results[p] if r['is_pk']}
+dr=write_po_header(ws_pk,'PACKING ITEMS - Urgency Sorted',f'{TODAY.strftime("%d-%b-%Y")} | Items:{len(pk_set)}','Dashboard','HOME (Dashboard)')
+rn=dr
+for p in PARTIES:
+    items={r['item'] for r in all_results[p] if r['is_pk']}
+    if items: rn=write_po_rows_filtered(ws_pk,p,items,{r['item']:r for r in all_results[p]},rn)
+apply_po_widths(ws_pk)
+
+all_channels=sorted(set(r['inlet'] for p in PARTIES for r in all_results[p] if r['inlet'] and r['inlet'] not in ['','None','nan']))
+inlet_sheet_names={}
+for ch in all_channels:
+    sname=csn(f'IC-{ch}'); inlet_sheet_names[ch]=sname; ws_ic=wb.create_sheet(sname)
+    ic_set={r['item'] for p in PARTIES for r in all_results[p] if r['inlet']==ch and isinstance(r['sq'],int) and r['sq']>0}
+    dr=write_po_header(ws_ic,f'INLET CHANNEL - {ch.upper()}',f'{TODAY.strftime("%d-%b-%Y")} | Channel: {ch} | Order items: {len(ic_set)}','Dashboard','HOME (Dashboard)')
+    rn=dr
+    for p in PARTIES:
+        items={r['item'] for r in all_results[p] if r['inlet']==ch and isinstance(r['sq'],int) and r['sq']>0}
+        if items: rn=write_po_rows_filtered(ws_ic,p,items,{r['item']:r for r in all_results[p]},rn)
+    apply_po_widths(ws_ic)
+
+def make_section(sname,title,filter_fn):
+    ws=wb.create_sheet(sname); items_set={r['item'] for p in PARTIES for r in all_results[p] if filter_fn(r)}
+    dr=write_po_header(ws,title,f'{TODAY.strftime("%d-%b-%Y")} | Items:{len(items_set)}','Dashboard','HOME (Dashboard)')
+    rn=dr
+    for p in PARTIES:
+        items={r['item'] for r in all_results[p] if filter_fn(r)}
+        if items: rn=write_po_rows_filtered(ws,p,items,{r['item']:r for r in all_results[p]},rn)
+    apply_po_widths(ws); return len(items_set)
+
+cnt_under=make_section('Understocked','UNDERSTOCKED ITEMS',lambda r: bool(r['underst'] and r['underst'] not in ['',' ','None','nan']))
+cnt_over=make_section('Overstocked','OVERSTOCKED ITEMS - No Order Needed',lambda r: bool(r['overst'] and r['overst'] not in ['',' ','None','nan']))
+cnt_decide=make_section('Decide Items','DECIDE ITEMS - Hash / Large Gap / Review',lambda r: r['decide'])
+ws_bl=wb.create_sheet('BeatList')
+for i,b in enumerate(sorted(beat_sheet_names.keys()),1): ws_bl.cell(i,1,b)
+
+print("Building dashboard...")
+idx=wb.create_sheet('Dashboard',0); idx.sheet_view.showGridLines=False
+def ic(ws,row,col,val,bg=None,bold=False,color='FF000000',size=11,italic=False,h='left',wrap=False,link=None,underline=None,merge_to=None):
+    if merge_to: ws.merge_cells(start_row=row,start_column=col,end_row=row,end_column=merge_to)
+    c=ws.cell(row,col,val)
+    if bg: c.fill=F(bg)
+    c.font=Font(bold=bold,color=color,size=size,italic=italic,underline=underline if underline else None); c.alignment=AL(h,wrap)
+    if link: c.hyperlink=link
+    return c
+r=1
+ic(idx,r,1,'  PURCHASE ORDER DASHBOARD',bg=C_DARK_BLUE,bold=True,color=C_WHITE,size=16,h='center',merge_to=8); idx.row_dimensions[r].height=36; r+=1
+ic(idx,r,1,f'  {TODAY.strftime("%A, %d %b %Y")}   |   Slow: {SLOW_WINDOW}d x{SLOW_MULT}   |   Fast: {FAST_WINDOW}d x{FAST_MULT}',bg=C_MID_BLUE,color=C_WHITE,size=10,h='center',merge_to=8); idx.row_dimensions[r].height=20; r+=2
+ic(idx,r,1,'  SEARCH BEAT',bg=C_BROWN,bold=True,color=C_WHITE,size=12,merge_to=8); idx.row_dimensions[r].height=26; r+=1
+ic(idx,r,1,'  Select beat day:',italic=True,color='FF555555',size=10); idx.row_dimensions[r].height=28
+dv=DataValidation(type='list',formula1=f"BeatList!$A$1:$A${len(beat_sheet_names)}",showDropDown=False,showErrorMessage=False); idx.add_data_validation(dv)
+dd=idx.cell(r,3,'-- Select Beat Day --'); dd.fill=F(C_YELLOW); dd.font=FN(bold=True,size=11,color='FF1F3864'); dd.alignment=AL('center'); dv.add(dd)
+ic(idx,r,4,'  then click link below:',italic=True,color='FF888888',size=9,merge_to=6); r+=1
+ic(idx,r,1,'  Quick Links:',italic=True,color='FF555555',size=9); idx.row_dimensions[r].height=24
+for i,(beat,sname) in enumerate(sorted(beat_sheet_names.items())):
+    c=idx.cell(r,2+i,f'  >> {beat} Beat  '); c.hyperlink=IHL(sname); c.fill=F(C_LIGHT_GREY); c.font=FN(bold=True,color='FF2E75B6',size=10,underline='single'); c.alignment=AL('center')
+r+=2
+ic(idx,r,1,'  BEAT-WISE ORDERS',bg=C_DARK_BLUE,bold=True,color=C_WHITE,size=12,merge_to=8); idx.row_dimensions[r].height=26; r+=1
+for ci,h in enumerate(['  Beat Day','  Party (Click to open PO)','Total','Order','Decide','No Order','Priority'],1):
+    c=idx.cell(r,ci,h); c.fill=F(C_LIGHT_GREY); c.font=FN(bold=True,size=9); c.alignment=AL('left' if ci<=2 else 'center')
+idx.row_dimensions[r].height=20; r+=1
+for beat,bps in sorted(beat_map.items()):
+    ic(idx,r,1,f'  {beat} Beat',bg=C_MID_BLUE,bold=True,color=C_WHITE,size=10,merge_to=8); idx.row_dimensions[r].height=22; r+=1
+    for p in bps:
+        s=party_stats[p]; idx.cell(r,1,'').fill=F(C_FAFAFF)
+        c=idx.cell(r,2,f'   {p}'); c.hyperlink=IHL(party_sheet_map[p]); c.fill=F(C_FAFAFF); c.font=FN(bold=True,color='FF2E75B6',size=10,underline='single'); c.alignment=AL()
+        idx.cell(r,3,s['total']).fill=F(C_FAFAFF); idx.cell(r,3).alignment=AL('center'); idx.cell(r,3).font=FN(size=10)
+        oc=idx.cell(r,4,s['order']); oc.fill=F(C_OOS if s['order']>0 else C_FAFAFF); oc.font=FN(bold=s['order']>0,color=C_RED if s['order']>0 else 'FF000000',size=10); oc.alignment=AL('center')
+        dc=idx.cell(r,5,s['decide']); dc.fill=F(C_SHORTFALL if s['decide']>0 else C_FAFAFF); dc.font=FN(bold=s['decide']>0,color=C_ORANGE if s['decide']>0 else 'FF000000',size=10); dc.alignment=AL('center')
+        nc=idx.cell(r,6,s['no']); nc.fill=F(C_FAFAFF); nc.alignment=AL('center'); nc.font=FN(size=10)
+        pc=idx.cell(r,7,s['priority']); pc.fill=F(s['pri_bg']); pc.font=FN(bold=True,size=10); pc.alignment=AL('center')
+        idx.row_dimensions[r].height=22; r+=1
+    r+=1
+r+=1
+ic(idx,r,1,'  QUICK NAVIGATION',bg=C_DARK_BLUE,bold=True,color=C_WHITE,size=12,merge_to=8); idx.row_dimensions[r].height=26; r+=1
+for ci,h in enumerate(['  Section','Description','Items','','Click to Open'],1):
+    c=idx.cell(r,ci,h); c.fill=F(C_LIGHT_GREY); c.font=FN(bold=True,size=9); c.alignment=AL('left' if ci<=2 else 'center')
+idx.row_dimensions[r].height=20; r+=1
+c=idx.cell(r,2,'  Packing Items'); c.hyperlink=IHL('Packing Items'); c.fill=F(C_FAFAFF); c.font=FN(bold=True,color=C_PURPLE,size=11,underline='single'); c.alignment=AL()
+idx.cell(r,3,'All packing items - urgency sorted').font=FN(italic=True,size=9,color='FF666666')
+idx.cell(r,4,f'{len(pk_set)} items').font=FN(bold=True,size=10); idx.cell(r,4).alignment=AL('center')
+c2=idx.cell(r,5,'  >> Open  '); c2.hyperlink=IHL('Packing Items'); c2.fill=F(C_PURPLE); c2.font=FN(bold=True,color=C_WHITE,size=10); c2.alignment=AL('center'); idx.row_dimensions[r].height=24; r+=1
+ic(idx,r,1,'  INLET CHANNEL WISE',bg=C_GREEN,bold=True,color=C_WHITE,size=11,merge_to=8); idx.row_dimensions[r].height=22; r+=1
+for ch in all_channels:
+    sname=inlet_sheet_names[ch]; ch_cnt=sum(1 for p in PARTIES for res in all_results[p] if res['inlet']==ch and isinstance(res['sq'],int) and res['sq']>0)
+    idx.cell(r,1,'').fill=F(C_FAFAFF); c=idx.cell(r,2,f'   {ch}'); c.hyperlink=IHL(sname); c.fill=F(C_FAFAFF); c.font=FN(bold=True,color=C_GREEN,size=10,underline='single'); c.alignment=AL()
+    idx.cell(r,3,'Channel-wise order items').font=FN(italic=True,size=9,color='FF666666')
+    idx.cell(r,4,f'{ch_cnt} items').font=FN(bold=True,size=10); idx.cell(r,4).alignment=AL('center')
+    c2=idx.cell(r,5,'  >> Open  '); c2.hyperlink=IHL(sname); c2.fill=F(C_GREEN); c2.font=FN(bold=True,color=C_WHITE,size=10); c2.alignment=AL('center'); idx.row_dimensions[r].height=22; r+=1
+r+=1
+for sname,label,bg,cnt in [('Understocked','Understocked',C_RED,cnt_under),('Overstocked','Overstocked',C_BLUE2,cnt_over),('Decide Items','Decide Items',C_ORANGE,cnt_decide)]:
+    idx.cell(r,1,'').fill=F(C_FAFAFF); c=idx.cell(r,2,f'  {label}'); c.hyperlink=IHL(sname); c.fill=F(C_FAFAFF); c.font=FN(bold=True,color=bg,size=11,underline='single'); c.alignment=AL()
+    idx.cell(r,3,{'Understocked':'Items running low','Overstocked':'Excess stock - no order','Decide Items':'Hash / Gap / Review needed'}[label]).font=FN(italic=True,size=9,color='FF666666')
+    idx.cell(r,4,f'{cnt} items').font=FN(bold=True,size=10); idx.cell(r,4).alignment=AL('center')
+    c2=idx.cell(r,5,'  >> Open  '); c2.hyperlink=IHL(sname); c2.fill=F(bg); c2.font=FN(bold=True,color=C_WHITE,size=10); c2.alignment=AL('center'); idx.row_dimensions[r].height=26; r+=1
+r+=1
+ic(idx,r,1,'  ROW COLOR LEGEND',bg=C_DARK_BLUE,bold=True,color=C_WHITE,size=10,merge_to=8); idx.row_dimensions[r].height=20; r+=1
+for bg,txt in [(C_OOS,'  Out of Stock'),(C_SHORTFALL,'  Shortfall'),(C_HASH,'  Hash / Zero demand / Fractional'),(C_DORMANT,'  Dormant (3-6 months)'),(C_DISC,'  Discontinued (>6 months)'),(C_OVERSTOCK,'  Overstocked')]:
+    idx.merge_cells(start_row=r,start_column=1,end_row=r,end_column=3); c=idx.cell(r,1,txt); c.fill=F(bg); c.font=FN(size=9); idx.row_dimensions[r].height=18; r+=1
+idx.column_dimensions['A'].width=4; idx.column_dimensions['B'].width=32; idx.column_dimensions['C'].width=36
+idx.column_dimensions['D'].width=14; idx.column_dimensions['E'].width=14; idx.column_dimensions['F'].width=14; idx.column_dimensions['G'].width=16; idx.column_dimensions['H'].width=14
+
+out_buf=io.BytesIO(); wb.save(out_buf); out_buf.seek(0); OUTPUT_BYTES=list(out_buf.read())
+STATS={'parties':len(PARTIES),'order':sum(s['order'] for s in party_stats.values()),'decide':sum(s['decide'] for s in party_stats.values()),'no':sum(s['no'] for s in party_stats.values())}
+print(f"Done! {STATS}")
+</script>
+
+<script>
+let pyodide=null,fileBytes=null,outBytes=null;
+async function loadPy(){
+  const bar=document.getElementById('lsBar'),step=document.getElementById('lsStep');
+  try{
+    step.textContent='Loading Pyodide runtime...';bar.style.width='15%';
+    pyodide=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.3/full/'});
+    bar.style.width='50%';step.textContent='Installing openpyxl...';
+    await pyodide.loadPackage('micropip');
+    await pyodide.runPythonAsync("import micropip; await micropip.install('openpyxl')");
+    bar.style.width='100%';step.textContent='Python ready!';
+    await new Promise(r=>setTimeout(r,600));
+    document.getElementById('ls').style.display='none';
+    document.getElementById('app').style.display='block';
+  }catch(e){
+    step.textContent='Error: '+e.message;step.style.color='#b91c1c';
+    document.getElementById('lsBar').style.background='#b91c1c';
+  }
+}
+function doDrop(ev){ev.preventDefault();document.getElementById('upz').classList.remove('on');handleFile(ev.dataTransfer.files[0]);}
+function handleFile(f){
+  if(!f||!f.name.endsWith('.xlsx')){alert('Please upload an .xlsx file');return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    fileBytes=new Uint8Array(e.target.result);
+    document.getElementById('fok').style.display='block';
+    document.getElementById('fok').textContent='File loaded: '+f.name+' ('+Math.round(fileBytes.length/1024)+' KB)';
+    checkRdy();
+  };
+  r.readAsArrayBuffer(f);
+}
+function checkRdy(){document.getElementById('genBtn').disabled=!(fileBytes&&pyodide);}
+async function runGen(){
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true;
+  document.getElementById('pw').style.display='block';
+  document.getElementById('dlBtn').className='btn-dl';
+  document.getElementById('stats').className='stats';
+  document.getElementById('status').textContent='';
+  setP(5,'Reading parameters...');
+  const sw=+document.getElementById('sw').value,fw=+document.getElementById('fw').value;
+  const sm=+document.getElementById('sm').value,fm=+document.getElementById('fm').value;
+  try{
+    setP(10,'Passing file to Python...');
+    pyodide.globals.set('INPUT_BYTES',Array.from(fileBytes));
+    pyodide.globals.set('SLOW_WINDOW',sw);pyodide.globals.set('FAST_WINDOW',fw);
+    pyodide.globals.set('SLOW_MULT',sm);pyodide.globals.set('FAST_MULT',fm);
+    setP(15,'Running Python... (30-60 seconds)');
+    const code=document.getElementById('pyCode').textContent;
+    let p=15;
+    const msgs={20:'Reading Excel...',35:'Processing parties...',55:'Writing party sheets...',72:'Writing beat sheets...',82:'Writing sections...',88:'Building dashboard...'};
+    const timer=setInterval(()=>{
+      p=Math.min(p+1.5,88);
+      for(const[k,v]of Object.entries(msgs).reverse()){if(p>=+k){setP(p,v);break;}}
+    },800);
+    await pyodide.runPythonAsync(code);
+    clearInterval(timer);
+    setP(95,'Preparing download...');
+    const stats=pyodide.globals.get('STATS').toJs();
+    outBytes=new Uint8Array(pyodide.globals.get('OUTPUT_BYTES').toJs());
+    setP(100,'Complete!');
+    document.getElementById('stP').textContent=stats.get('parties');
+    document.getElementById('stO').textContent=stats.get('order');
+    document.getElementById('stD').textContent=stats.get('decide');
+    document.getElementById('stN').textContent=stats.get('no');
+    document.getElementById('stats').className='stats show';
+    document.getElementById('dlBtn').className='btn-dl show';
+    document.getElementById('status').className='status ok';
+    document.getElementById('status').textContent='Dashboard ready — '+stats.get('parties')+' parties processed';
+  }catch(e){
+    document.getElementById('status').className='status err';
+    document.getElementById('status').textContent='Error: '+e.message;
+    console.error(e);
+  }
+  btn.disabled=false;
+}
+function setP(p,t){document.getElementById('pb').style.width=p+'%';document.getElementById('ptxt').textContent=t;}
+function triggerDl(){
+  if(!outBytes)return;
+  const d=new Date();const ds=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'');
+  const blob=new Blob([outBytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PO_DASHBOARD_'+ds+'.xlsx';a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.3/full/pyodide.js" onload="loadPy()" onerror="document.getElementById('lsStep').textContent='Failed to load — check internet and refresh'"></script>
+</body>
+</html>
