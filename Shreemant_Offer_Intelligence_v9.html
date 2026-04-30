@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant — Offer Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --brand:#8B0000;--brand-h:#6d0000;--brand-l:#fdf0f0;--brand-m:#f5d5d5;
+  --gold:#B8860B;--gold-l:#fdf8e8;
+  --cream:#FAF7F2;--surface:#fff;
+  --border:#E4DDD5;--border-s:#C8BFB5;
+  --text:#1C1714;--text-m:#6B5F55;--text-l:#9B8F84;
+  --green:#1B6B3A;--green-l:#EAF5F0;--green-m:#C8EAD8;
+  --amber:#8A5A00;--amber-l:#FEF5E4;--amber-m:#F5D89A;
+  --red:#C0220E;--red-l:#FDEEEC;--red-m:#F5C5BE;
+  --blue:#1A4F8A;--blue-l:#EAF0FA;--blue-m:#B8D0F0;
+  --orange:#B85C00;--orange-l:#FFF3E0;--orange-m:#FFCC80;
+  --purple:#5B2D8E;--purple-l:#F2EDF9;--purple-m:#D8C4F5;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--text);font-size:14px;display:flex;flex-direction:column;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:#1a1a1a;}
+::-webkit-scrollbar-thumb{background:#ffffff;border-radius:4px;border:2px solid #1a1a1a;}
+::-webkit-scrollbar-thumb:hover{background:#e0e0e0;}
+::-webkit-scrollbar-corner{background:#1a1a1a;}
+
+/* HEADER */
+.hdr{flex-shrink:0;background:var(--brand);color:#fff;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;z-index:400;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.hdr-l{display:flex;align-items:center;gap:11px;}
+.hdr-ico{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.hdr-t{font-size:14px;font-weight:600;letter-spacing:-.2px;}
+.hdr-s{font-size:10px;opacity:.6;margin-top:1px;}
+.hdr-r{display:flex;align-items:center;gap:7px;}
+.hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:3px 10px;font-size:11px;font-weight:500;}
+.bell-btn{position:relative;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:5px;padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#fff;font-family:'Outfit',sans-serif;transition:background .15s;}
+.bell-btn:hover{background:rgba(255,255,255,.28);}
+.bell-dot{position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:var(--orange);border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;border:2px solid var(--brand);}
+
+/* VIEW SELECTED BTN in header */
+.sel-hdr-btn{background:rgba(255,255,255,.92);color:var(--brand);border:none;border-radius:5px;padding:5px 12px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;display:none;align-items:center;gap:5px;transition:background .15s;}
+.sel-hdr-btn:hover{background:#fff;}
+.sel-hdr-btn.show{display:flex;}
+.sel-hdr-dot{background:var(--brand);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:2px;}
+
+/* BODY LAYOUT */
+.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+/* UPLOAD */
+.upload-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.upload-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:40px;max-width:560px;width:100%;text-align:center;}
+.drop{border:2px dashed var(--border-s);border-radius:10px;padding:50px 20px;cursor:pointer;transition:all .2s;background:var(--cream);}
+.drop:hover,.drop.ov{border-color:var(--brand);background:var(--brand-l);}
+.drop-ico{font-size:44px;margin-bottom:12px;}
+.drop-t{font-size:16px;font-weight:600;margin-bottom:5px;}
+.drop-s{font-size:13px;color:var(--text-m);}
+.drop-hint{margin-top:14px;font-size:11px;color:var(--text-l);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 14px;display:inline-block;}
+#fi{display:none;}
+
+/* RESULTS */
+.results-layout{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+/* CONTROLS */
+.ctrl-bar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ctrl-grp{display:flex;align-items:center;gap:7px;padding:6px 12px;background:var(--cream);border:1px solid var(--border);border-radius:7px;}
+.ctrl-lbl{font-size:10px;font-weight:600;color:var(--text-m);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;}
+input[type=range]{-webkit-appearance:none;width:120px;height:4px;border-radius:2px;background:linear-gradient(to right,var(--green) 0%,var(--amber) 50%,var(--red) 80%,var(--brand) 100%);cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 2px var(--brand);cursor:pointer;}
+.s-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--brand);min-width:30px;}
+.mood{font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;}
+.mood-ag{background:var(--red-l);color:var(--red);}
+.mood-mo{background:var(--amber-l);color:var(--amber);}
+.mood-co{background:var(--green-l);color:var(--green);}
+
+/* Toggle */
+.toggle{position:relative;width:34px;height:19px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-sl{position:absolute;inset:0;background:#ccc;border-radius:20px;transition:.2s;cursor:pointer;}
+.toggle-sl:before{content:'';position:absolute;width:13px;height:13px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-sl{background:var(--amber);}
+.toggle input:checked+.toggle-sl:before{transform:translateX(15px);}
+.toggle-lbl{font-size:10px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+
+.ftabs{display:flex;gap:3px;}
+.ftab{padding:4px 9px;border-radius:5px;border:1px solid var(--border);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;background:transparent;font-family:'Outfit',sans-serif;color:var(--text-m);}
+.ftab.act{background:var(--brand);color:#fff;border-color:var(--brand);}
+.ftab:hover:not(.act){background:var(--brand-l);color:var(--brand);border-color:var(--brand-m);}
+.srch{border:none;outline:none;font-family:'Outfit',sans-serif;font-size:12.5px;background:transparent;color:var(--text);width:150px;}
+.srch::placeholder{color:var(--text-l);}
+.btn{background:var(--brand);color:#fff;border:none;border-radius:6px;padding:6px 13px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn:hover{background:var(--brand-h);}
+.btn-g{background:transparent;color:var(--text-m);border:1px solid var(--border-s);}
+.btn-g:hover{background:var(--cream);color:var(--text);}
+
+/* STATS */
+.stats{flex-shrink:0;display:flex;gap:7px;padding:8px 14px;background:var(--cream);border-bottom:1px solid var(--border);overflow-x:auto;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 13px;flex-shrink:0;}
+.stat-lbl{font-size:10px;color:var(--text-m);font-weight:500;margin-bottom:2px;}
+.stat-v{font-size:18px;font-weight:600;line-height:1;}
+
+/* TABLE CONTAINER */
+.tbl-container{flex:1;overflow:auto;position:relative;}
+
+/* TABLE */
+table{border-collapse:collapse;background:var(--surface);font-size:12.5px;width:max-content;min-width:100%;}
+thead th{background:#2D1A1A;color:rgba(255,255,255,.88);padding:8px 10px;text-align:left;font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;position:sticky;top:0;z-index:10;user-select:none;}
+th.sortable{cursor:pointer;}
+th.sortable:hover{background:#3d2222;}
+th .sort-ico{margin-left:4px;opacity:.4;font-size:9px;}
+th.sort-asc .sort-ico::after{content:'▲';opacity:1;}
+th.sort-desc .sort-ico::after{content:'▼';opacity:1;}
+th:not(.sort-asc):not(.sort-desc) .sort-ico::after{content:'⇅';}
+.th-inner{display:flex;align-items:center;gap:4px;position:relative;}
+.resize-handle{position:absolute;right:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:20;background:transparent;}
+.resize-handle:hover,.resize-handle.rsz{background:rgba(255,255,255,.25);}
+
+/* Checkbox col — RIGHT side */
+th.col-chk,td.col-chk{width:38px;min-width:38px;max-width:38px;text-align:center;padding:6px 4px;position:sticky;right:0;z-index:5;}
+th.col-chk{background:#2D1A1A;z-index:11;}
+td.col-chk{background:var(--surface);}
+tbody tr:hover td.col-chk{background:#f6f0ea;}
+tbody tr.selected td.col-chk{background:#fdf0f0;}
+input[type=checkbox]{cursor:pointer;width:14px;height:14px;accent-color:var(--brand);}
+
+tbody tr{border-bottom:1px solid var(--border);transition:background .08s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#f6f0ea;}
+tbody tr.selected{background:#fdf0f0;}
+tbody tr.selected:hover{background:#fae0e0;}
+tbody tr.row-under{opacity:.78;}
+td{padding:8px 10px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;}
+td.num{font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:600;white-space:nowrap;border:1px solid;}
+.b-over{background:var(--red-l);color:var(--red);border-color:var(--red-m);}
+.b-under{background:var(--amber-l);color:var(--amber);border-color:var(--amber-m);}
+.b-ok{background:var(--green-l);color:var(--green);border-color:var(--green-m);}
+
+/* OFFER CELLS */
+.o-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--green);}
+.o-sub{font-size:10.5px;color:var(--text-m);margin-top:1px;}
+.o-na{color:var(--text-l);font-size:11.5px;}
+.o-no{color:var(--red);font-size:10.5px;}
+.no-tag{display:inline-flex;align-items:center;background:var(--amber-l);border:1px solid var(--amber-m);color:var(--amber);border-radius:5px;padding:2px 8px;font-size:10.5px;font-weight:600;}
+
+/* COMBO LIST */
+.combo-list{display:flex;flex-direction:column;gap:3px;min-width:220px;}
+.combo-pill{display:grid;grid-template-columns:38px 60px 1fr;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;font-weight:500;border:1px solid;}
+.combo-pill.viable{background:var(--blue-l);border-color:var(--blue-m);color:var(--blue);}
+.combo-pill.nostock{background:var(--red-l);border-color:var(--red-m);color:var(--red);}
+.combo-pill.lowstock{background:var(--amber-l);border-color:var(--amber-m);color:var(--amber);}
+.combo-code{font-weight:700;font-size:12px;}
+.combo-margin{font-size:10px;}
+.combo-possible{font-size:9.5px;text-align:right;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px;color:var(--text-m);}
+.empty-ico{font-size:38px;margin-bottom:8px;}
+.empty-t{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+
+/* WARN NOTE */
+.warn-note{flex-shrink:0;background:var(--gold-l);border-top:1px solid #E8D080;padding:7px 14px;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--amber);line-height:1.5;}
+
+/* SELECTED MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;flex-direction:column;}
+.modal-box{background:var(--cream);flex:1;display:flex;flex-direction:column;margin:10px;border-radius:14px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.modal-hdr{background:var(--brand);color:#fff;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-size:13px;font-weight:600;}
+.modal-actions{display:flex;gap:7px;align-items:center;}
+.btn-white{background:#fff;color:var(--brand);border:none;border-radius:5px;padding:5px 12px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.btn-white:hover{background:#f0f0f0;}
+.modal-close{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;padding:5px 11px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:11px;}
+.modal-close:hover{background:rgba(255,255,255,.28);}
+.modal-tbl-wrap{flex:1;overflow:auto;}
+
+/* ZERO MODAL */
+.zero-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:700;display:flex;align-items:flex-start;justify-content:flex-end;padding:58px 16px 0;}
+.zero-box{background:var(--surface);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);width:350px;max-height:55vh;display:flex;flex-direction:column;animation:si .2s ease;}
+@keyframes si{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.zero-hdr{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.zero-title{font-size:12px;font-weight:600;color:var(--orange);}
+.zero-close{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-m);}
+.zero-body{padding:11px 15px;overflow-y:auto;flex:1;font-size:12px;}
+.zero-note{color:var(--text-m);margin-bottom:8px;line-height:1.5;}
+.zero-row{padding:4px 9px;background:var(--orange-l);border:1px solid var(--orange-m);border-radius:4px;color:var(--orange);font-weight:500;margin-bottom:4px;}
+
+/* ── TAB BAR ── */
+.tab-bar{flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);display:flex;align-items:flex-end;gap:2px;padding:0 16px;}
+.main-tab{background:transparent;border:none;border-bottom:3px solid transparent;padding:10px 18px;font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:500;color:var(--text-m);cursor:pointer;transition:all .15s;margin-bottom:-2px;border-radius:0;}
+.main-tab:hover{color:var(--text);background:var(--cream);}
+.main-tab.act{color:var(--brand);border-bottom-color:var(--brand);font-weight:600;}
+
+/* ── TAB PANELS ── */
+.tab-panel{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ── GROUP OFFER TAB ── */
+.go-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:560px 1fr;gap:0;}
+.go-list-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.go-result-panel{overflow-y:auto;padding:20px;}
+.panel-hdr{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--cream);display:flex;align-items:center;gap:7px;flex-shrink:0;flex-wrap:wrap;}
+.panel-hdr2{padding:6px 14px;border-bottom:1px solid var(--border);background:#f5f0ea;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.exact-toggle-wrap{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--text-m);white-space:nowrap;cursor:pointer;}
+.exact-toggle-wrap input{accent-color:var(--brand);width:13px;height:13px;cursor:pointer;}
+.sel-all-btn{background:var(--green-l);border:1px solid var(--green-m);color:var(--green);border-radius:5px;padding:3px 9px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;}
+.sel-all-btn:hover{background:var(--green-m);}
+.panel-hdr-title{font-size:11px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;}
+.panel-srch{flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-family:'Outfit',sans-serif;font-size:12.5px;background:var(--surface);color:var(--text);outline:none;}
+.panel-srch:focus{border-color:var(--brand);}
+/* Column header row inside list */
+.list-col-hdr{display:flex;align-items:center;gap:0;padding:5px 14px;border-bottom:2px solid var(--border-s);background:#2D1A1A;flex-shrink:0;}
+.list-col-hdr span{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.lch-chk{width:22px;flex-shrink:0;}
+.lch-name{flex:1;min-width:0;}
+.lch-margin{width:54px;text-align:right;}
+.lch-stock{width:56px;text-align:right;}
+.lch-mrp{width:58px;text-align:right;}
+.lch-cost{width:68px;text-align:right;}
+.item-list-scroll{flex:1;overflow-y:auto;}
+.item-row{display:flex;align-items:center;gap:0;padding:6px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.item-row:hover{background:var(--cream);}
+.item-row.sel-row{background:var(--brand-l);}
+.ir-chk{width:22px;flex-shrink:0;display:flex;align-items:center;}
+.ir-name{flex:1;min-width:0;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px;}
+.ir-margin{width:54px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;}
+.ir-stock{width:56px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-m);white-space:nowrap;}
+.ir-mrp{width:58px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-m);white-space:nowrap;}
+.ir-cost{width:68px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);white-space:nowrap;}
+.panel-footer{flex-shrink:0;padding:10px 14px;border-top:1px solid var(--border);background:var(--cream);display:flex;gap:8px;align-items:center;}
+
+/* result cards */
+.result-empty{text-align:center;padding:60px 20px;color:var(--text-m);}
+.result-hdr{font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text);}
+.result-meta{font-size:12px;color:var(--text-m);margin-bottom:16px;line-height:1.6;}
+.result-weak{background:var(--red-l);border:1px solid var(--red-m);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red);}
+.slider-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;}
+.slider-block-title{font-size:11px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;}
+.slider-row{display:flex;align-items:center;gap:10px;}
+.slider-row input[type=range]{flex:1;}
+.tier-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12.5px;}
+.tier-table th{background:#2D1A1A;color:rgba(255,255,255,.85);padding:7px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+.tier-table td{padding:7px 12px;border-bottom:1px solid var(--border);}
+.safe-bar{height:8px;border-radius:4px;background:var(--green);transition:width .3s;}
+.safe-bar-wrap{background:var(--border);border-radius:4px;height:8px;min-width:80px;overflow:hidden;}
+
+/* ── CROSS COMBO TAB ── */
+.cc-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:360px 1fr;gap:0;}
+.cc-list-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.cc-result-panel{overflow-y:auto;padding:20px;}
+.anchor-card{background:var(--brand-l);border:1px solid var(--brand-m);border-radius:8px;padding:12px 16px;margin-bottom:16px;}
+.anchor-card-title{font-size:10px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.anchor-name{font-size:14px;font-weight:600;color:var(--brand);margin-bottom:4px;}
+.anchor-meta{font-size:12px;color:var(--text-m);}
+.anchor-avail{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);font-weight:500;}
+.cc-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.cc-tbl thead th{background:#2D1A1A;color:rgba(255,255,255,.88);padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0;}
+.cc-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+.cc-tbl tbody tr:hover{background:var(--cream);}
+.cc-tbl td{padding:8px 10px;vertical-align:middle;}
+
+/* Print */
+@media print{
+  .modal-overlay{position:static;background:none;margin:0;}
+  .modal-box{margin:0;border-radius:0;box-shadow:none;}
+  .modal-hdr .modal-actions,.modal-hdr .modal-close{display:none!important;}
+  .hdr,.app-body>*,.results-layout{display:none!important;}
+  .modal-overlay.show-print{display:flex!important;}
+}
+
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-ico">🏷️</div>
+    <div>
+      <div class="hdr-t">Shreemant — Offer Intelligence System</div>
+      <div class="hdr-s">Upload purchase file → margin-based offer suggestions with combo analysis</div>
+    </div>
+  </div>
+  <div class="hdr-r">
+    <!-- View Selected button -->
+    <button class="sel-hdr-btn" id="sel-hdr-btn" onclick="openSelModal()">
+      📋 View Selected <span class="sel-hdr-dot" id="sel-hdr-count">0</span>
+    </button>
+    <button class="bell-btn hidden" id="bell-btn" onclick="openZeroModal()">
+      ⚠️ Zero Cost <span class="bell-dot" id="bell-count">0</span>
+    </button>
+    <div class="hdr-badge" id="hdr-count">No data loaded</div>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- UPLOAD -->
+  <div class="upload-screen" id="step-upload">
+    <div class="upload-card">
+      <div class="drop" id="drop-zone" onclick="document.getElementById('fi').click()">
+        <div class="drop-ico">📊</div>
+        <div class="drop-t">Drop your Purchase File here</div>
+        <div class="drop-s">Excel (.xlsx) or CSV — drag &amp; drop or click to browse</div>
+        <div class="drop-hint">⚡ Columns auto-detected from Purchase File Builder output</div>
+      </div>
+      <input type="file" id="fi" accept=".xlsx,.csv" onchange="handleUpload(event)">
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-layout hidden" id="step-results">
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="main-tab act" onclick="switchTab('t1',this)">🏷️ Offer Intelligence</button>
+      <button class="main-tab" onclick="switchTab('t2',this)">📊 Group Offer Analysis</button>
+      <button class="main-tab" onclick="switchTab('t3',this)">🔗 Cross-Item Combo</button>
+    </div>
+
+    <!-- TAB 1: OFFER INTELLIGENCE (existing, untouched) -->
+    <div class="tab-panel" id="t1">
+
+    <!-- CONTROLS BAR -->
+    <div class="ctrl-bar">
+      <div class="ctrl-grp">
+        <div class="ctrl-lbl" title="Min Margin on Sale Price — after discount, this % of sale price must remain as profit. Formula: Min SP = Cost ÷ (1 − Margin%)">Min Margin on SP ⓘ</div>
+        <input type="range" id="m-slider" min="0" max="30" value="5" step="0.5" oninput="onSlider(this.value)">
+        <div class="s-val" id="s-disp">5%</div>
+        <div class="mood mood-mo" id="mood">⚡ Moderate</div>
+      </div>
+
+      <div class="ctrl-grp">
+        <div class="ctrl-lbl">Understocked</div>
+        <label class="toggle">
+          <input type="checkbox" id="under-toggle" onchange="onUnderToggle()">
+          <span class="toggle-sl"></span>
+        </label>
+        <span class="toggle-lbl" id="under-lbl">Hidden</span>
+      </div>
+
+      <div class="ctrl-grp">
+        <div class="ctrl-lbl">Filter</div>
+        <div class="ftabs">
+          <button class="ftab act" onclick="setFilter('all',this)">All</button>
+          <button class="ftab" onclick="setFilter('overstocked',this)">🔴 Over</button>
+          <button class="ftab" onclick="setFilter('sufficient',this)">✅ OK</button>
+        </div>
+      </div>
+
+      <div class="ctrl-grp">
+        <span style="color:var(--text-l);font-size:12px;">🔍</span>
+        <input class="srch" type="text" id="srch" placeholder="Search item..." oninput="renderTable()">
+      </div>
+
+      <button class="btn btn-g" onclick="resetAll()">↩ New File</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats" id="stats-row"></div>
+
+    <!-- TABLE -->
+    <div class="tbl-container" id="tbl-container">
+      <table id="otable">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="name" style="min-width:180px;"><div class="th-inner">Item Name<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="status" style="min-width:100px;"><div class="th-inner">Status<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="closing" style="min-width:90px;"><div class="th-inner">Closing Stock<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="effCost" style="min-width:100px;"><div class="th-inner">Net Cost/pc ₹<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="mrp" style="min-width:80px;"><div class="th-inner">MRP ₹<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="grossM" style="min-width:90px;"><div class="th-inner">Gross Margin %<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="flatMax" style="min-width:120px;"><div class="th-inner">Max Flat Off ₹<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="pctMax" style="min-width:145px;"><div class="th-inner">Max % Off → Sale Price<span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="sortable" data-key="comboCount" style="min-width:240px;"><div class="th-inner">Buy X Get Y &nbsp;<span style="opacity:.55;font-size:8px;font-weight:400;font-family:'Outfit',sans-serif;text-transform:none;letter-spacing:0;">highest margin first · stock checked</span><span class="sort-ico"></span><div class="resize-handle"></div></div></th>
+            <th class="col-chk" title="Select row"><input type="checkbox" id="chk-all" title="Select / deselect all visible" onchange="toggleAll(this)"></th>
+          </tr>
+        </thead>
+        <tbody id="otbody"></tbody>
+      </table>
+      <div class="empty hidden" id="no-res">
+        <div class="empty-ico">🔍</div>
+        <div class="empty-t">No items found</div>
+        <div style="font-size:12px;color:var(--text-m);">Adjust filter or search</div>
+      </div>
+    </div>
+
+    <!-- WARN NOTE -->
+    <div class="warn-note">
+      <span style="font-size:15px;flex-shrink:0;">⚠️</span>
+      <span><strong style="color:var(--gold);">Before finalizing offers, consider:</strong> transportation charges, purchase discounts, scheme benefits, or vouchers not reflected in Net Cost/pc.</span>
+    </div>
+
+    </div><!-- /t1 -->
+
+    <!-- TAB 2: GROUP OFFER ANALYSIS -->
+    <div class="tab-panel hidden" id="t2">
+      <div class="go-layout">
+        <!-- LEFT: item selection list -->
+        <div class="go-list-panel">
+          <div class="panel-hdr">
+            <input class="panel-srch" id="go-srch" type="text" placeholder="Search items..." oninput="renderGoList()">
+            <label class="exact-toggle-wrap" title="Toggle exact keyword match">
+              <input type="checkbox" id="go-exact" onchange="renderGoList()"> Exact
+            </label>
+            <label class="exact-toggle-wrap" title="Hide items with zero closing stock">
+              <input type="checkbox" id="go-hide-oos" onchange="renderGoList()" checked> Hide OOS
+            </label>
+            <button class="btn btn-g" style="font-size:11px;padding:5px 10px;" onclick="goImportFromMain()" title="Import main table selection">⬆ Import</button>
+          </div>
+          <div class="panel-hdr2" id="go-subbar" style="display:none;">
+            <span id="go-search-count" style="font-size:11px;color:var(--text-m);"></span>
+            <button class="sel-all-btn" onclick="goSelectAllSearched()">✅ Select All Shown</button>
+          </div>
+          <!-- Column headers -->
+          <div class="list-col-hdr">
+            <span class="lch-chk"></span>
+            <span class="lch-name">Item Name</span>
+            <span class="lch-margin">Margin%</span>
+            <span class="lch-stock">Stock</span>
+            <span class="lch-mrp">MRP</span>
+            <span class="lch-cost">Cost/pc</span>
+          </div>
+          <div class="item-list-scroll" id="go-list"></div>
+          <div class="panel-footer">
+            <span id="go-sel-count" style="font-size:11px;color:var(--text-m);">0 items selected</span>
+            <button class="btn btn-g" style="font-size:11px;padding:5px 10px;" onclick="goClear()">Clear all</button>
+            <button class="btn" style="font-size:11px;padding:5px 12px;margin-left:auto;" onclick="goAnalyse()">Analyse Group ▶</button>
+          </div>
+        </div>
+        <!-- RIGHT: results -->
+        <div class="go-result-panel" id="go-result">
+          <div class="result-empty">
+            <div style="font-size:36px;margin-bottom:8px;">📊</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Group Offer Analysis</div>
+            <div style="font-size:12px;color:var(--text-m);">Select items from the left list and click "Analyse Group"</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t2 -->
+
+    <!-- TAB 3: CROSS-ITEM COMBO EXPLORER -->
+    <div class="tab-panel hidden" id="t3">
+      <div class="cc-layout">
+        <!-- LEFT: anchor selection -->
+        <div class="cc-list-panel">
+          <div class="panel-hdr">
+            <input class="panel-srch" id="cc-srch" type="text" placeholder="Search anchor item..." oninput="renderCcList()">
+            <button class="btn btn-g" style="font-size:11px;padding:5px 10px;" onclick="ccImportFromMain()" title="Use first item from main selection as anchor">⬆ Import Anchor</button>
+          </div>
+          <div class="item-list-scroll" id="cc-list"></div>
+          <div class="panel-footer">
+            <span id="cc-anchor-label" style="font-size:11px;color:var(--text-m);">No anchor selected</span>
+            <button class="btn" style="font-size:11px;padding:5px 12px;margin-left:auto;" onclick="ccAnalyse()">Explore Combos ▶</button>
+          </div>
+        </div>
+        <!-- RIGHT: results -->
+        <div class="cc-result-panel" id="cc-result">
+          <div class="result-empty">
+            <div style="font-size:36px;margin-bottom:8px;">🔗</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Cross-Item Combo Explorer</div>
+            <div style="font-size:12px;color:var(--text-m);">Select an anchor item from the left, then click "Explore Combos"</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /t3 -->
+
+  </div><!-- /results-layout -->
+
+</div><!-- /app-body -->
+
+<!-- SELECTED ITEMS MODAL -->
+<div class="modal-overlay hidden" id="sel-modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">✅ Selected Items — <span id="sel-modal-count">0</span></div>
+      <div class="modal-actions">
+        <button class="btn-white" onclick="exportSelCSV()">⬇ Export CSV</button>
+        <button class="btn-white" onclick="printSel()">🖨️ Print</button>
+        <button class="modal-close" onclick="closeSelModal()">✕ Close</button>
+      </div>
+    </div>
+    <div class="modal-tbl-wrap" id="sel-tbl-wrap"></div>
+  </div>
+</div>
+
+<!-- ZERO COST MODAL -->
+<div class="zero-overlay hidden" id="zero-overlay" onclick="closeZeroOutside(event)">
+  <div class="zero-box">
+    <div class="zero-hdr">
+      <span class="zero-title">⚠️ Items with Zero Net Cost/pc</span>
+      <button class="zero-close" onclick="closeZeroModal()">✕</button>
+    </div>
+    <div class="zero-body">
+      <p class="zero-note">These items have <strong>Net Cost/pc = 0</strong> in your file — likely a Busy data issue. Offer suggestions skipped. Please verify in Busy.</p>
+      <div id="zero-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── COLUMN ALIASES ────────────────────────────────────────────────────────────
+const ALIASES={
+  date:      ['bill date','date','invoice date'],
+  item:      ['item name','item','product','description'],
+  qty:       ['qty','quantity','purchase qty'],
+  mrp:       ['item mrp','mrp','maximum retail'],
+  cost:      ['net cost/pc','net cost','cost/pc','cost price','landing','purchase rate'],
+  closing:   ['closing stock','closing qty','closing','balance stock','net stock'],
+  overstock: ['overstock','over stock','overstocked'],
+  understock:['understock','under stock','understocked'],
+};
+
+// Buy X Get Y combos to evaluate
+const COMBOS=[
+  {x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:5,y:1},
+  {x:1,y:2},{x:3,y:2},{x:2,y:3},{x:4,y:2},{x:5,y:2},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let items=[], selected=new Set(), activeFilter='all';
+let sortKey='name', sortDir='asc', activeMargin=5;
+let zeroItems=[], resolvedCols={};
+
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+function handleUpload(e){if(e.target.files[0])handleFile(e.target.files[0]);}
+
+function handleFile(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary',cellDates:true,dateNF:'YYYY-MM-DD'});
+      let sn=wb.SheetNames[0];
+      for(const n of wb.SheetNames){if(/complete|purchase/i.test(n)){sn=n;break;}}
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:'',raw:false,dateNF:'YYYY-MM-DD'});
+      if(!rows.length){alert('No data found in file.');return;}
+      resolveColumns(Object.keys(rows[0]));
+      build(rows,file.name);
+    }catch(err){alert('Parse error:\n'+err.message);}
+  };
+  r.readAsBinaryString(file);
+}
+
+function resolveColumns(cols){
+  resolvedCols={};
+  const lm={};cols.forEach(c=>lm[c.toLowerCase().trim()]=c);
+  for(const [k,aliases] of Object.entries(ALIASES)){
+    for(const c of cols){if(c.trim().toLowerCase()===aliases[0]){resolvedCols[k]=c;break;}}
+    if(resolvedCols[k])continue;
+    for(const a of aliases){
+      for(const [lc,orig] of Object.entries(lm)){
+        if(lc.includes(a)||a.includes(lc)){resolvedCols[k]=orig;break;}
+      }
+      if(resolvedCols[k])break;
+    }
+  }
+}
+const g=(row,k)=>{const c=resolvedCols[k];return c?row[c]:undefined;};
+const pN=v=>parseFloat(String(v||'').replace(/[^\d.-]/g,''))||0;
+const pD=v=>{if(!v)return 0;const d=new Date(v);return isNaN(d.getTime())?0:d.getTime();};
+
+// ── BUILD DATA ────────────────────────────────────────────────────────────────
+function build(rows,fileName){
+  const map={};zeroItems=[];
+  for(const row of rows){
+    const name=String(g(row,'item')||'').trim();if(!name)continue;
+    const mrp=pN(g(row,'mrp')),cost=pN(g(row,'cost')),qty=pN(g(row,'qty'));
+    const closing=Math.max(0,pN(g(row,'closing')));
+    const dt=pD(g(row,'date'));
+    const ov=String(g(row,'overstock')||'').trim();
+    const un=String(g(row,'understock')||'').trim();
+    if(!map[name])map[name]={purchases:[],closing:0,mrp:0,ov:'',un:'',hasZero:false};
+    const it=map[name];
+    if(closing>0)it.closing=closing;if(mrp>it.mrp)it.mrp=mrp;
+    if(ov)it.ov=ov;if(un)it.un=un;
+    if(cost===0&&qty>0)it.hasZero=true;
+    if(cost>0&&qty>0)it.purchases.push({date:dt,qty,cost});
+    else if(cost>0)it.purchases.push({date:dt,qty:1,cost});
+  }
+  items=[];
+  for(const [name,it] of Object.entries(map)){
+    if(it.hasZero&&!it.purchases.length){zeroItems.push(name);continue;}
+    if(!it.mrp)continue;
+    const effCost=lifo(it.purchases,it.closing);
+    if(!effCost){if(it.hasZero)zeroItems.push(name);continue;}
+    const grossM=(it.mrp-effCost)/it.mrp*100;
+    const status=resolveStatus(it.ov,it.un);
+    items.push({name,closing:it.closing,mrp:it.mrp,effCost,grossM,status,hasZero:it.hasZero});
+  }
+  items.sort((a,b)=>a.name.localeCompare(b.name));
+
+  if(zeroItems.length){
+    document.getElementById('bell-btn').classList.remove('hidden');
+    document.getElementById('bell-count').textContent=zeroItems.length;
+    document.getElementById('zero-list').innerHTML=zeroItems.map(n=>`<div class="zero-row">⚠️ ${n}</div>`).join('');
+  }
+  document.getElementById('step-upload').classList.add('hidden');
+  document.getElementById('step-results').classList.remove('hidden');
+  document.getElementById('hdr-count').textContent=`${items.length} items · ${fileName}`;
+  renderStats();renderTable();initColResize();initSortHeaders();
+}
+
+function lifo(purchases,closing){
+  if(!purchases.length)return null;
+  const s=[...purchases].sort((a,b)=>b.date-a.date);
+  if(closing<=0)return s[0].cost;
+  let rem=closing,tv=0,tq=0;
+  for(const lot of s){if(rem<=0)break;const take=Math.min(rem,lot.qty);tv+=take*lot.cost;tq+=take;rem-=take;}
+  return tq?tv/tq:s[0].cost;
+}
+const resolveStatus=(ov,un)=>{
+  const p=v=>v&&v!=='0'&&!/^(no|false|-)$/i.test(v.trim());
+  if(p(ov))return'overstocked';if(p(un))return'understocked';return'sufficient';
+};
+
+// ── OFFER ENGINE ──────────────────────────────────────────────────────────────
+function getOffers(mrp,cost,closing,minM){
+  if(!mrp||!cost||mrp<=0||cost<=0)return null;
+  const grossM=(mrp-cost)/mrp*100;
+  const denom=1-minM/100;
+  const minSP=denom<=0?cost:cost/denom;
+  const flatMax=mrp-minSP;
+  const pctMax=flatMax>0?(flatMax/mrp)*100:0;
+  const spAfter=pctMax>0?mrp*(1-Math.floor(pctMax)/100):null;
+
+  const combos=[];
+  for(const {x,y} of COMBOS){
+    const rev=x*mrp,tc=(x+y)*cost,m=(rev-tc)/rev*100;
+    if(m<minM)continue;
+    const need=x+y;
+    // How many full combos possible with closing stock?
+    const combosQty=closing>0?Math.floor(closing/need):null; // null = unknown stock
+    combos.push({x,y,m,need,combosQty});
+  }
+  combos.sort((a,b)=>b.m-a.m);
+  return{grossM,flatMax:flatMax>0?flatMax:null,pctMax:pctMax>0?pctMax:null,spAfter,combos};
+}
+
+// ── CONTROLS ─────────────────────────────────────────────────────────────────
+function onSlider(v){
+  activeMargin=parseInt(v);
+  document.getElementById('s-disp').textContent=v+'%';
+  const t=document.getElementById('mood');
+  if(v==0){t.className='mood mood-ag';t.textContent='🔥 Zero Margin';}
+  else if(v<=5){t.className='mood mood-ag';t.textContent='🔥 Aggressive';}
+  else if(v<=15){t.className='mood mood-mo';t.textContent='⚡ Moderate';}
+  else{t.className='mood mood-co';t.textContent='🛡️ Conservative';}
+  renderTable();
+}
+function onUnderToggle(){
+  document.getElementById('under-lbl').textContent=document.getElementById('under-toggle').checked?'Visible':'Hidden';
+  renderTable();
+}
+function setFilter(v,btn){
+  activeFilter=v;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');renderTable();
+}
+
+// ── SORT ─────────────────────────────────────────────────────────────────────
+function initSortHeaders(){
+  document.querySelectorAll('th.sortable').forEach(th=>{
+    th.addEventListener('click',e=>{
+      if(e.target.classList.contains('resize-handle'))return;
+      const k=th.dataset.key;
+      if(sortKey===k)sortDir=sortDir==='asc'?'desc':'asc';
+      else{sortKey=k;sortDir=(k==='name'||k==='status')?'asc':'desc';}
+      document.querySelectorAll('th.sortable').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+      th.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
+      renderTable();
+    });
+  });
+}
+function getSortVal(it,k){
+  if(k==='name')return it.name;
+  if(k==='status'){return{overstocked:0,sufficient:1,understocked:2}[it.status]??3;}
+  if(k==='closing')return it.closing;
+  if(k==='effCost')return it.effCost;
+  if(k==='mrp')return it.mrp;
+  if(k==='grossM')return it.grossM;
+  const o=getOffers(it.mrp,it.effCost,it.closing,activeMargin);
+  if(k==='flatMax')return o&&o.flatMax?o.flatMax:0;
+  if(k==='pctMax')return o&&o.pctMax?o.pctMax:0;
+  if(k==='comboCount')return o?o.combos.length:0;
+  return 0;
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const over=items.filter(i=>i.status==='overstocked').length;
+  const under=items.filter(i=>i.status==='understocked').length;
+  const ok=items.filter(i=>i.status==='sufficient').length;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Total Items</div><div class="stat-v" style="color:var(--brand)">${items.length}</div></div>
+    <div class="stat"><div class="stat-lbl">🔴 Overstocked</div><div class="stat-v" style="color:var(--red)">${over}</div></div>
+    <div class="stat"><div class="stat-lbl">✅ Sufficient</div><div class="stat-v" style="color:var(--green)">${ok}</div></div>
+    <div class="stat"><div class="stat-lbl">⚠️ Understocked</div><div class="stat-v" style="color:var(--amber)">${under}</div></div>
+    <div class="stat"><div class="stat-lbl">Offer Candidates</div><div class="stat-v" style="color:var(--brand)">${over+ok}</div></div>
+    <div class="stat"><div class="stat-lbl">Selected</div><div class="stat-v" style="color:var(--purple)" id="sel-stat">0</div></div>
+  `;
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────────────────
+function getVisibleItems(){
+  const showUnder=document.getElementById('under-toggle').checked;
+  const srch=(document.getElementById('srch').value||'').toLowerCase();
+  let list=[...items];
+  if(!showUnder)list=list.filter(i=>i.status!=='understocked');
+  if(activeFilter!=='all')list=list.filter(i=>i.status===activeFilter);
+  if(srch)list=list.filter(i=>i.name.toLowerCase().includes(srch));
+  list.sort((a,b)=>{
+    const va=getSortVal(a,sortKey),vb=getSortVal(b,sortKey);
+    return typeof va==='string'
+      ?(sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va))
+      :(sortDir==='asc'?va-vb:vb-va);
+  });
+  return list;
+}
+
+function renderTable(){
+  const list=getVisibleItems();
+  const tbody=document.getElementById('otbody');
+  tbody.innerHTML='';
+  document.getElementById('no-res').classList.toggle('hidden',list.length>0);
+  for(const item of list)tbody.appendChild(buildRow(item,false));
+  // Sync master checkbox
+  const vis=list.filter(i=>selected.has(i.name)).length;
+  const ca=document.getElementById('chk-all');
+  ca.indeterminate=vis>0&&vis<list.length;
+  ca.checked=list.length>0&&vis===list.length;
+  updateSelUI();
+}
+
+// ── BUILD ROW ────────────────────────────────────────────────────────────────
+function buildRow(item,forModal){
+  const isUnder=item.status==='understocked';
+  const o=getOffers(item.mrp,item.effCost,item.closing,activeMargin);
+  const mColor=item.grossM<8?'var(--red)':item.grossM<15?'var(--amber)':'var(--green)';
+  const tr=document.createElement('tr');
+  if(isUnder)tr.classList.add('row-under');
+  if(selected.has(item.name))tr.classList.add('selected');
+
+  // Status badge
+  const stBadge=item.status==='overstocked'
+    ?`<span class="badge b-over">🔴 Overstocked</span>`
+    :item.status==='understocked'
+    ?`<span class="badge b-under">⚠️ Understocked</span>`
+    :`<span class="badge b-ok">✅ Sufficient</span>`;
+
+  // Flat off
+  let flatCell='<span class="o-na">—</span>';
+  if(isUnder)flatCell='<div class="no-tag">⛔</div>';
+  else if(o&&o.flatMax)flatCell=`<div class="o-val">₹${o.flatMax.toFixed(0)} off</div><div class="o-sub">SP → ₹${(item.mrp-o.flatMax).toFixed(0)}</div>`;
+  else if(o)flatCell='<span class="o-no">Not viable</span>';
+
+  // Pct + SP
+  let pctCell='<span class="o-na">—</span>';
+  if(isUnder)pctCell='<div class="no-tag">⛔</div>';
+  else if(o&&o.pctMax)pctCell=`<div class="o-val">${Math.floor(o.pctMax)}% off</div><div class="o-sub">Sale price → ₹${o.spAfter.toFixed(0)}</div>`;
+  else if(o)pctCell='<span class="o-no">Not viable</span>';
+
+  // Combos ── CORE LOGIC: X combos possible per B X G Y
+  let comboCell='<span class="o-na">—</span>';
+  if(isUnder){
+    comboCell='<div class="no-tag">⛔ Understocked</div>';
+  } else if(o&&o.combos.length){
+    const pills=o.combos.map(c=>{
+      // combosQty = how many full combos store can run with current stock
+      let possibleTxt='';
+      let cls='combo-pill viable';
+      if(c.combosQty===null){
+        // stock unknown
+        possibleTxt='stock unknown';
+        cls='combo-pill viable';
+      } else if(c.combosQty===0){
+        possibleTxt=`⚠️ Need ${c.need} units`;
+        cls='combo-pill nostock';
+      } else {
+        possibleTxt=`${c.combosQty} combo${c.combosQty>1?'s':''} possible`;
+        cls=c.combosQty<3?'combo-pill lowstock':'combo-pill viable';
+      }
+      return `<div class="${cls}">
+        <span class="combo-code">B${c.x}G${c.y}</span>
+        <span class="combo-margin">${c.m.toFixed(1)}%</span>
+        <span class="combo-possible">${possibleTxt}</span>
+      </div>`;
+    }).join('');
+    comboCell=`<div class="combo-list">${pills}</div>`;
+  } else if(o){
+    comboCell='<span class="o-no">No combo viable</span>';
+  }
+
+  const costStr=`<span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">₹${item.effCost.toFixed(2)}</span>${item.hasZero?'<br><span style="font-size:9px;color:var(--orange);">⚠️ data gap</span>':''}`;
+
+  // Checkbox cell — right side
+  const nameEsc=item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const chkCell=forModal
+    ? ''  // no checkbox in modal
+    : `<td class="col-chk"><input type="checkbox" ${selected.has(item.name)?'checked':''} data-name="${item.name.replace(/"/g,'&quot;')}" onchange="toggleItem(this)"></td>`;
+
+  tr.innerHTML=`
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;" title="${item.name}">${item.name}</td>
+    <td>${stBadge}</td>
+    <td class="num">${item.closing>0?item.closing.toLocaleString('en-IN'):'—'}</td>
+    <td class="num">${costStr}</td>
+    <td class="num">₹${item.mrp.toFixed(2)}</td>
+    <td class="num" style="color:${mColor};font-weight:600;">${item.grossM.toFixed(1)}%</td>
+    <td>${flatCell}</td>
+    <td>${pctCell}</td>
+    <td>${comboCell}</td>
+    ${chkCell}
+  `;
+  return tr;
+}
+
+// ── SELECTION ────────────────────────────────────────────────────────────────
+function toggleItem(chk){
+  const name=chk.dataset.name;
+  if(chk.checked)selected.add(name);
+  else selected.delete(name);
+  chk.closest('tr').classList.toggle('selected',chk.checked);
+  updateSelUI();
+  // Sync master checkbox
+  const list=getVisibleItems();
+  const vis=list.filter(i=>selected.has(i.name)).length;
+  const ca=document.getElementById('chk-all');
+  ca.indeterminate=vis>0&&vis<list.length;
+  ca.checked=list.length>0&&vis===list.length;
+}
+
+function toggleAll(masterChk){
+  const list=getVisibleItems();
+  list.forEach(i=>{if(masterChk.checked)selected.add(i.name);else selected.delete(i.name);});
+  renderTable();
+}
+
+function updateSelUI(){
+  const n=selected.size;
+  const btn=document.getElementById('sel-hdr-btn');
+  btn.classList.toggle('show',n>0);
+  document.getElementById('sel-hdr-count').textContent=n;
+  const ss=document.getElementById('sel-stat');
+  if(ss)ss.textContent=n;
+}
+
+function deselect(name){
+  selected.delete(name);
+  updateSelUI();
+  renderTable();
+  // Refresh modal if open
+  if(!document.getElementById('sel-modal').classList.contains('hidden'))openSelModal();
+}
+
+// ── SELECTED MODAL ────────────────────────────────────────────────────────────
+function openSelModal(){
+  const selItems=items.filter(i=>selected.has(i.name));
+  document.getElementById('sel-modal-count').textContent=`${selItems.length} item${selItems.length!==1?'s':''}`;
+  const wrap=document.getElementById('sel-tbl-wrap');
+
+  // Table with same visual display + deselect button
+  let html=`<table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:12.5px;background:var(--surface);">
+    <thead><tr style="background:#2D1A1A;">
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;width:32px;text-align:center;">#</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;min-width:180px;">Item Name</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;">Status</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">Closing Stock</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">Net Cost/pc ₹</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">MRP ₹</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">Margin %</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">Max Flat Off ₹</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:right;">Max % Off → Sale Price</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;min-width:220px;">Buy X Get Y Combos</th>
+      <th style="padding:8px 10px;color:rgba(255,255,255,.88);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;text-align:center;">Remove</th>
+    </tr></thead><tbody>`;
+
+  selItems.forEach((item,idx)=>{
+    const isUnder=item.status==='understocked';
+    const o=getOffers(item.mrp,item.effCost,item.closing,activeMargin);
+    const mColor=item.grossM<8?'var(--red)':item.grossM<15?'var(--amber)':'var(--green)';
+    const stBadge=item.status==='overstocked'
+      ?`<span class="badge b-over">🔴 Overstocked</span>`
+      :item.status==='understocked'
+      ?`<span class="badge b-under">⚠️ Understocked</span>`
+      :`<span class="badge b-ok">✅ Sufficient</span>`;
+
+    let flatCell='<span class="o-na">—</span>';
+    if(isUnder)flatCell='<div class="no-tag">⛔</div>';
+    else if(o&&o.flatMax)flatCell=`<div class="o-val">₹${o.flatMax.toFixed(0)} off</div><div class="o-sub">SP → ₹${(item.mrp-o.flatMax).toFixed(0)}</div>`;
+    else if(o)flatCell='<span class="o-no">—</span>';
+
+    let pctCell='<span class="o-na">—</span>';
+    if(!isUnder&&o&&o.pctMax)pctCell=`<div class="o-val">${Math.floor(o.pctMax)}% off</div><div class="o-sub">→ ₹${o.spAfter.toFixed(0)}</div>`;
+
+    let comboCell='<span class="o-na">—</span>';
+    if(isUnder){comboCell='<div class="no-tag">⛔</div>';}
+    else if(o&&o.combos.length){
+      comboCell=`<div class="combo-list">${o.combos.map(c=>{
+        let possibleTxt='',cls='combo-pill viable';
+        if(c.combosQty===null){possibleTxt='stock unknown';}
+        else if(c.combosQty===0){possibleTxt=`⚠️ Need ${c.need}`;cls='combo-pill nostock';}
+        else{possibleTxt=`${c.combosQty} combo${c.combosQty>1?'s':''} possible`;cls=c.combosQty<3?'combo-pill lowstock':'combo-pill viable';}
+        return `<div class="${cls}"><span class="combo-code">B${c.x}G${c.y}</span><span class="combo-margin">${c.m.toFixed(1)}%</span><span class="combo-possible">${possibleTxt}</span></div>`;
+      }).join('')}</div>`;
+    } else if(o){comboCell='<span class="o-no">None viable</span>';}
+
+    const rowStyle=isUnder?'background:var(--amber-l);':'';
+    const nameEsc=item.name.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    html+=`<tr style="border-bottom:1px solid var(--border);${rowStyle}">
+      <td style="padding:8px 10px;text-align:center;font-size:10.5px;color:var(--text-l);">${idx+1}</td>
+      <td style="padding:8px 10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;" title="${item.name}">${item.name}</td>
+      <td style="padding:8px 10px;">${stBadge}</td>
+      <td style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;">${item.closing>0?item.closing.toLocaleString('en-IN'):'—'}</td>
+      <td style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:var(--blue);">₹${item.effCost.toFixed(2)}</td>
+      <td style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;">₹${item.mrp.toFixed(2)}</td>
+      <td style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:${mColor};font-weight:600;">${item.grossM.toFixed(1)}%</td>
+      <td style="padding:8px 10px;">${flatCell}</td>
+      <td style="padding:8px 10px;">${pctCell}</td>
+      <td style="padding:8px 10px;">${comboCell}</td>
+      <td style="padding:8px 10px;text-align:center;">
+        <button onclick="deselect('${nameEsc}')" style="background:var(--red-l);border:1px solid var(--red-m);color:var(--red);border-radius:5px;padding:3px 9px;cursor:pointer;font-size:11px;font-family:'Outfit',sans-serif;font-weight:600;" title="Remove from selection">✕</button>
+      </td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table>`;
+  if(!selItems.length){
+    html=`<div class="empty"><div class="empty-ico">📭</div><div class="empty-t">No items selected</div><div style="font-size:12px;color:var(--text-m);">Go back and check items in the table</div></div>`;
+  }
+  wrap.innerHTML=html;
+  document.getElementById('sel-modal').classList.remove('hidden');
+}
+
+function closeSelModal(){document.getElementById('sel-modal').classList.add('hidden');}
+
+// ── EXPORT SELECTED ───────────────────────────────────────────────────────────
+function exportSelCSV(){
+  const selItems=items.filter(i=>selected.has(i.name));
+  const hdr=['#','Item Name','Status','Closing Stock','Net Cost/pc (₹)','MRP (₹)','Gross Margin %',
+    'Max Flat Off (₹)','Max % Off','Sale Price after % Off','Combos (BxGy | margin% | qty possible)'];
+  const rows=[hdr];
+  selItems.forEach((item,idx)=>{
+    const isU=item.status==='understocked';
+    const o=getOffers(item.mrp,item.effCost,item.closing,activeMargin);
+    rows.push([
+      idx+1,item.name,item.status,item.closing,
+      item.effCost.toFixed(2),item.mrp.toFixed(2),item.grossM.toFixed(1)+'%',
+      isU||!o||!o.flatMax?'':o.flatMax.toFixed(2),
+      isU||!o||!o.pctMax?'':Math.floor(o.pctMax)+'%',
+      isU||!o||!o.spAfter?'':o.spAfter.toFixed(0),
+      isU?'No offer':o&&o.combos.length
+        ?o.combos.map(c=>`B${c.x}G${c.y}|${c.m.toFixed(1)}%|${c.combosQty===null?'?':c.combosQty+' combos'}`).join(' / ')
+        :'None viable',
+    ]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`Shreemant_Selected_Offers_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function printSel(){window.print();}
+
+// ── ZERO MODAL ────────────────────────────────────────────────────────────────
+function openZeroModal(){document.getElementById('zero-overlay').classList.remove('hidden');}
+function closeZeroModal(){document.getElementById('zero-overlay').classList.add('hidden');}
+function closeZeroOutside(e){if(e.target===document.getElementById('zero-overlay'))closeZeroModal();}
+
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function resetAll(){
+  items=[];selected=new Set();activeFilter='all';sortKey='name';sortDir='asc';activeMargin=5;zeroItems=[];
+  goSelected=new Set();ccAnchor=null;ccMinMargin=5;goCurrentGroup=[];goMinMargin=5;goCustomOff=5;
+  document.getElementById('fi').value='';
+  document.getElementById('step-upload').classList.remove('hidden');
+  document.getElementById('step-results').classList.add('hidden');
+  document.getElementById('bell-btn').classList.add('hidden');
+  document.getElementById('sel-hdr-btn').classList.remove('show');
+  document.getElementById('hdr-count').textContent='No data loaded';
+  document.getElementById('m-slider').value=5;
+  document.getElementById('s-disp').textContent='5%';
+  document.getElementById('srch').value='';
+  // Reset to tab 1
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('t1').classList.remove('hidden');
+  document.querySelectorAll('.main-tab').forEach((b,i)=>{b.classList.toggle('act',i===0);});
+}
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────────────
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.remove('act'));
+  document.getElementById(id).classList.remove('hidden');
+  btn.classList.add('act');
+  if(id==='t2')renderGoList();
+  if(id==='t3')renderCcList();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 2 — GROUP OFFER ANALYSIS
+// ══════════════════════════════════════════════════════════════════════════════
+let goSelected=new Set();
+let goCurrentGroup=[];   // stored on analyse click
+let goMinMargin=5;       // min margin slider value
+let goCustomOff=5;       // custom % off slider value
+
+function getGoFiltered(){
+  const srch=(document.getElementById('go-srch').value||'').toLowerCase().trim();
+  const exact=document.getElementById('go-exact').checked;
+  const hideOOS=document.getElementById('go-hide-oos').checked;
+  let list=items;
+  if(hideOOS) list=list.filter(i=>i.closing>0);
+  if(!srch) return list;
+  return list.filter(i=>{
+    const n=i.name.toLowerCase();
+    return exact ? n.split(/\s+/).some(w=>w===srch)||n.includes(' '+srch+' ')||n.startsWith(srch+' ')||n.endsWith(' '+srch)||n===srch
+                 : n.includes(srch);
+  });
+}
+
+function renderGoList(){
+  const filtered=getGoFiltered();
+  const srch=(document.getElementById('go-srch').value||'').trim();
+  // Show/hide sub-bar
+  const subbar=document.getElementById('go-subbar');
+  if(srch){
+    subbar.style.display='flex';
+    document.getElementById('go-search-count').textContent=`${filtered.length} results`;
+  } else {
+    subbar.style.display='none';
+  }
+  const el=document.getElementById('go-list');
+  el.innerHTML=filtered.map(i=>{
+    const isSel=goSelected.has(i.name);
+    const mColor=i.grossM<8?'var(--red)':i.grossM<15?'var(--amber)':'var(--green)';
+    const nameEsc=i.name.replace(/"/g,'&quot;');
+    const safeName=i.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const stockStr=i.closing>0?i.closing.toLocaleString('en-IN'):'—';
+    const mrpStr='₹'+i.mrp.toFixed(0);
+    const costStr=i.effCost>0?'₹'+i.effCost.toFixed(2):'—';
+    return`<div class="item-row${isSel?' sel-row':''}" onclick="goToggle('${safeName}')">
+      <span class="ir-chk"><input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation();goToggle('${safeName}');" style="width:13px;height:13px;accent-color:var(--brand);cursor:pointer;"></span>
+      <span class="ir-name" title="${nameEsc}">${i.name}</span>
+      <span class="ir-margin" style="color:${mColor};">${i.grossM.toFixed(1)}%</span>
+      <span class="ir-stock">${stockStr}</span>
+      <span class="ir-mrp">${mrpStr}</span>
+      <span class="ir-cost">${costStr}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('go-sel-count').textContent=`${goSelected.size} items selected`;
+}
+
+function goToggle(name){
+  if(goSelected.has(name))goSelected.delete(name);
+  else goSelected.add(name);
+  renderGoList();
+}
+
+function goSelectAllSearched(){
+  getGoFiltered().forEach(i=>goSelected.add(i.name));
+  renderGoList();
+}
+
+function goClear(){
+  goSelected.clear();
+  renderGoList();
+  document.getElementById('go-result').innerHTML=`<div class="result-empty"><div style="font-size:36px;margin-bottom:8px;">📊</div><div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Group Offer Analysis</div><div style="font-size:12px;color:var(--text-m);">Select items from the left and click Analyse Group</div></div>`;
+}
+
+function goImportFromMain(){
+  if(!selected.size){alert('No items selected in main table.');return;}
+  selected.forEach(n=>goSelected.add(n));
+  renderGoList();
+}
+
+function goAnalyse(){
+  if(goSelected.size<1){alert('Select at least 1 item.');return;}
+  goCurrentGroup=items.filter(i=>goSelected.has(i.name));
+  renderGoResult();
+}
+
+function renderGoResult(){
+  const grp=goCurrentGroup;
+  const n=grp.length;
+  const minM=goMinMargin;
+  const customOff=goCustomOff;
+
+  // For each item: can it sustain customOff% off while keeping minM% margin?
+  // pctMax = max % off item can sustain at minM floor
+  const enriched=grp.map(i=>{
+    const o=getOffers(i.mrp,i.effCost,i.closing,minM);
+    const pctMax=o&&o.pctMax?o.pctMax:0;
+    const safeAtCustom=pctMax>=customOff;
+    return{...i,pctMax,safeAtCustom};
+  });
+
+  const safeCount=enriched.filter(i=>i.safeAtCustom).length;
+  const unsafeItems=enriched.filter(i=>!i.safeAtCustom);
+  const weakest=enriched.reduce((a,b)=>a.pctMax<b.pctMax?a:b);
+
+  // Fixed tiers
+  const tiers=[2,5,8,10,12,15,18,20,25].filter(t=>t<=Math.ceil(enriched.reduce((a,b)=>Math.max(a,b.pctMax),0))+3);
+  const tierRows=tiers.map(t=>{
+    const safe=enriched.filter(i=>i.pctMax>=t).length;
+    const pct=Math.round(safe/n*100);
+    const color=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+    return`<tr>
+      <td style="font-family:'IBM Plex Mono',monospace;font-weight:600;">${t}% off</td>
+      <td style="color:${color};font-weight:600;">${safe}/${n} safe</td>
+      <td><div style="background:var(--border);border-radius:4px;height:8px;min-width:80px;overflow:hidden;"><div style="width:${pct}%;height:8px;border-radius:4px;background:${color};transition:width .3s;"></div></div></td>
+      <td style="font-size:11px;color:var(--text-m);">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  // Unsafe items list
+  const unsafeHtml=unsafeItems.length?`
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--red);padding:6px 0;">⚠️ ${unsafeItems.length} items NOT safe at ${customOff}% off (click to expand)</summary>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;">
+        ${unsafeItems.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:var(--red-l);border:1px solid var(--red-m);border-radius:5px;font-size:11.5px;">
+          <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${i.name}">${i.name}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);flex-shrink:0;margin-left:8px;">max ${i.pctMax.toFixed(1)}% off</span>
+        </div>`).join('')}
+      </div>
+    </details>`:'<div style="color:var(--green);font-size:12px;font-weight:600;margin-top:8px;">✅ All items safe at this discount level!</div>';
+
+  document.getElementById('go-result').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div class="result-hdr" style="margin-bottom:0;">${n} Items — Group Offer Analysis</div>
+      <button class="btn btn-g" style="font-size:11px;padding:5px 12px;" onclick="exportGoCSV()">⬇ Export CSV</button>
+    </div>
+
+    <!-- TWO SLIDERS -->
+    <div class="slider-block" style="margin-bottom:10px;">
+      <div class="slider-block-title">① Min Margin on Sale Price — must remain after discount</div>
+      <div style="font-size:10.5px;color:var(--text-m);margin-bottom:8px;">e.g. 5% means: after giving discount, at least 5% of the sale price must remain as profit &nbsp;·&nbsp; Min SP = Cost ÷ (1 − Margin%)</div>
+      <div class="slider-row">
+        <input type="range" id="go-min-slider" min="0" max="30" value="${minM}" step="0.5" oninput="goMinSliderChange(this.value)">
+        <span id="go-min-val" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--brand);min-width:40px;">${minM}%</span>
+      </div>
+    </div>
+    <div class="slider-block" style="margin-bottom:14px;">
+      <div class="slider-block-title">② Custom % Off to Apply on Group</div>
+      <div class="slider-row">
+        <input type="range" id="go-off-slider" min="0" max="50" value="${customOff}" step="0.5" oninput="goOffSliderChange(this.value)">
+        <span id="go-off-val" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--brand);min-width:40px;">${customOff}%</span>
+        <span id="go-off-safe" style="font-size:12px;color:var(--text-m);font-weight:600;"></span>
+      </div>
+    </div>
+
+    <!-- UNSAFE ITEMS -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">
+        At <span id="go-result-pct" style="color:var(--brand);">${customOff}%</span> off with <span style="color:var(--brand);">${minM}%</span> min margin on sale price:
+        &nbsp;<strong id="go-result-safe" style="color:${safeCount===n?'var(--green)':safeCount>n/2?'var(--amber)':'var(--red)'};">${safeCount}/${n} items safe</strong>
+      </div>
+      <div style="background:#2D1A1A;border-radius:5px;height:10px;overflow:hidden;margin-bottom:8px;">
+        <div id="go-safe-bar" style="height:10px;border-radius:5px;background:var(--green);width:${Math.round(safeCount/n*100)}%;transition:width .3s;"></div>
+      </div>
+      <div id="go-unsafe-wrap">${unsafeHtml}</div>
+    </div>
+
+    <!-- TIER TABLE -->
+    <div id="go-tier-lbl" style="font-size:11px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Discount Capacity Table (at ${minM}% min margin on sale price)</div>
+    <table class="tier-table" style="margin-bottom:14px;">
+      <thead><tr><th>Discount Level</th><th>Items Safe</th><th>Coverage</th><th>%</th></tr></thead>
+      <tbody id="go-tier-body">${tierRows}</tbody>
+    </table>
+
+    <div style="font-size:11px;color:var(--text-m);background:var(--gold-l);border:1px solid #E8D080;border-radius:6px;padding:8px 12px;">
+      ⚠️ Based on LIFO cost. Consider transport charges and purchase discounts before finalising any offer.
+    </div>`;
+
+  // Init safe display
+  updateGoSafeDisplay(safeCount,n,customOff);
+}
+
+function goMinSliderChange(val){
+  goMinMargin=parseFloat(val);
+  document.getElementById('go-min-val').textContent=parseFloat(val).toFixed(1)+'%';
+  // Do NOT call renderGoResult() — that re-creates sliders and breaks drag
+  // Only update the live result numbers
+  goUpdateLiveResults();
+}
+
+function goOffSliderChange(val){
+  goCustomOff=parseFloat(val);
+  document.getElementById('go-off-val').textContent=parseFloat(val).toFixed(1)+'%';
+  goUpdateLiveResults();
+}
+
+// Update only result numbers — never touches sliders
+function goUpdateLiveResults(){
+  if(!goCurrentGroup.length)return;
+  const n=goCurrentGroup.length;
+  const minM=goMinMargin;
+  const customOff=goCustomOff;
+
+  const enriched=goCurrentGroup.map(i=>{
+    const o=getOffers(i.mrp,i.effCost,i.closing,minM);
+    const pctMax=o&&o.pctMax?o.pctMax:0;
+    return{...i,pctMax,safeAtCustom:pctMax>=customOff};
+  });
+
+  const safeCount=enriched.filter(i=>i.safeAtCustom).length;
+  const unsafeItems=enriched.filter(i=>!i.safeAtCustom);
+
+  // Update safe display
+  updateGoSafeDisplay(safeCount,n,customOff);
+
+  // Update tier table
+  const tbody=document.getElementById('go-tier-body');
+  if(tbody){
+    const tiers=[2,5,8,10,12,15,18,20,25];
+    tbody.innerHTML=tiers.map(t=>{
+      const safe=enriched.filter(i=>i.pctMax>=t).length;
+      const pct=Math.round(safe/n*100);
+      const color=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+      return`<tr>
+        <td style="font-family:'IBM Plex Mono',monospace;font-weight:600;">${t}% off</td>
+        <td style="color:${color};font-weight:600;">${safe}/${n} safe</td>
+        <td><div style="background:var(--border);border-radius:4px;height:8px;min-width:80px;overflow:hidden;"><div style="width:${pct}%;height:8px;border-radius:4px;background:${color};transition:width .3s;"></div></div></td>
+        <td style="font-size:11px;color:var(--text-m);">${pct}%</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Update unsafe list
+  const uEl=document.getElementById('go-unsafe-wrap');
+  if(uEl){
+    uEl.innerHTML=unsafeItems.length
+      ?`<details>
+          <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--red);padding:6px 0;">⚠️ ${unsafeItems.length} items NOT safe at ${customOff.toFixed(1)}% off (click to expand)</summary>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px;">
+            ${unsafeItems.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:var(--red-l);border:1px solid var(--red-m);border-radius:5px;font-size:11.5px;">
+              <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;">${i.name}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);flex-shrink:0;margin-left:8px;">max ${i.pctMax.toFixed(1)}% off</span>
+            </div>`).join('')}
+          </div>
+        </details>`
+      :'<div style="color:var(--green);font-size:12px;font-weight:600;margin-top:4px;">✅ All items safe at this discount level!</div>';
+  }
+
+  // Update tier table label
+  const tierLbl=document.getElementById('go-tier-lbl');
+  if(tierLbl)tierLbl.textContent=`Discount Capacity Table (at ${minM.toFixed(1)}% min margin on sale price)`;
+}
+
+function updateGoSafeDisplay(safeCount,n,off){
+  const el=document.getElementById('go-off-safe');
+  if(el){const color=safeCount===n?'var(--green)':safeCount>n/2?'var(--amber)':'var(--red)';el.innerHTML=`→ <span style="color:${color};">${safeCount}/${n} safe</span>`;}
+  const rs=document.getElementById('go-result-safe');
+  const rp=document.getElementById('go-result-pct');
+  const bar=document.getElementById('go-safe-bar');
+  if(rs){const color=safeCount===n?'var(--green)':safeCount>n/2?'var(--amber)':'var(--red)';rs.style.color=color;rs.textContent=`${safeCount}/${n} items safe`;}
+  if(rp)rp.textContent=off+'%';
+  if(bar)bar.style.width=Math.round(safeCount/n*100)+'%';
+}
+
+function exportGoCSV(){
+  if(!goCurrentGroup.length)return;
+  const rows=[['Item Name','Status','Closing Stock','Net Cost/pc','MRP','Gross Margin %',`Max Sustainable Discount (at ${goMinMargin}% floor)`,`Safe at ${goCustomOff}% Off`]];
+  [...goCurrentGroup].sort((a,b)=>a.name.localeCompare(b.name)).forEach(i=>{
+    const o=getOffers(i.mrp,i.effCost,i.closing,goMinMargin);
+    const pctMax=o&&o.pctMax?Math.floor(o.pctMax):0;
+    rows.push([i.name,i.status,i.closing,i.effCost.toFixed(2),i.mrp.toFixed(2),i.grossM.toFixed(1)+'%',pctMax+'%',pctMax>=goCustomOff?'YES':'NO']);
+  });
+  dlCSV(rows,`Shreemant_Group_Offer_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB 3 — CROSS-ITEM COMBO EXPLORER
+// ══════════════════════════════════════════════════════════════════════════════
+let ccAnchor=null; // item name
+let ccMinMargin=5;
+
+function renderCcList(){
+  const srch=(document.getElementById('cc-srch').value||'').toLowerCase();
+  const list=items.filter(i=>!srch||i.name.toLowerCase().includes(srch));
+  const el=document.getElementById('cc-list');
+  el.innerHTML=list.map(i=>{
+    const isSel=ccAnchor===i.name;
+    const mColor=i.grossM<8?'var(--red)':i.grossM<15?'var(--amber)':'var(--green)';
+    return`<div class="item-row${isSel?' sel-row':''}" onclick="ccSelect('${i.name.replace(/'/g,"\\'")}')">
+      <input type="radio" name="cc-radio" ${isSel?'checked':''} onclick="event.stopPropagation();ccSelect('${i.name.replace(/'/g,"\\'")}');" style="width:14px;height:14px;accent-color:var(--brand);cursor:pointer;flex-shrink:0;">
+      <span class="item-row-name" title="${i.name}">${i.name}</span>
+      <span class="item-row-meta" style="color:${mColor};">${i.grossM.toFixed(1)}%</span>
+      <span class="item-row-meta">₹${i.mrp.toFixed(0)}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('cc-anchor-label').textContent=ccAnchor||'No anchor selected';
+}
+
+function ccSelect(name){
+  ccAnchor=name;
+  document.getElementById('cc-anchor-label').textContent=name;
+  renderCcList();
+}
+
+function ccImportFromMain(){
+  if(!selected.size){alert('No items selected in main table.');return;}
+  const firstName=[...selected][0];
+  ccSelect(firstName);
+}
+
+function ccAnalyse(){
+  if(!ccAnchor){alert('Please select an anchor item first.');return;}
+  const anchor=items.find(i=>i.name===ccAnchor);
+  if(!anchor){alert('Anchor item not found.');return;}
+
+  // Margin available from anchor = MRP - Cost
+  // Combined margin = (anchor.mrp - anchor.effCost - free.effCost) / anchor.mrp * 100
+  // Combos possible = floor(min(anchor.closing, free.closing) / 1) — 1 of each per combo
+  const minM=ccMinMargin;
+  const anchorMarginAmt=anchor.mrp-anchor.effCost; // ₹ available
+
+  const candidates=items
+    .filter(i=>i.name!==anchor.name)
+    .map(i=>{
+      const combinedM=(anchor.mrp-anchor.effCost-i.effCost)/anchor.mrp*100;
+      const combosQty=Math.min(
+        anchor.closing>0?anchor.closing:Infinity,
+        i.closing>0?i.closing:Infinity
+      );
+      const combosDisplay=combosQty===Infinity?null:Math.floor(combosQty);
+      return{...i,combinedM,combosDisplay};
+    })
+    .filter(i=>i.combinedM>=minM)
+    .sort((a,b)=>b.combinedM-a.combinedM);
+
+  const result=document.getElementById('cc-result');
+
+  if(!candidates.length){
+    result.innerHTML=`
+      <div class="anchor-card">
+        <div class="anchor-card-title">Anchor Item</div>
+        <div class="anchor-name">${anchor.name}</div>
+        <div class="anchor-meta">MRP ₹${anchor.mrp.toFixed(2)} | Cost ₹${anchor.effCost.toFixed(2)} | Margin ₹${anchorMarginAmt.toFixed(2)} (${anchor.grossM.toFixed(1)}%)</div>
+      </div>
+      <div class="slider-block">
+        <div class="slider-block-title">Min Combined Margin</div>
+        <div class="slider-row">
+          <input type="range" id="cc-slider" min="0" max="30" value="${minM}" step="1" oninput="ccSliderChange(this.value)">
+          <span id="cc-slider-val" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--brand);">${minM}%</span>
+        </div>
+      </div>
+      <div class="result-empty" style="padding:30px 0;">No free item candidates at ${minM}% combined margin. Try lowering the slider.</div>`;
+    return;
+  }
+
+  let rows=candidates.map((c,idx)=>{
+    const mColor=c.combinedM<5?'var(--red)':c.combinedM<12?'var(--amber)':'var(--green)';
+    const stBadge=c.status==='overstocked'?`<span class="badge b-over" style="font-size:9.5px;">🔴 Over</span>`
+      :c.status==='understocked'?`<span class="badge b-under" style="font-size:9.5px;">⚠️ Under</span>`
+      :`<span class="badge b-ok" style="font-size:9.5px;">✅ OK</span>`;
+    const combosStr=c.combosDisplay===null?'—':`${c.combosDisplay} combo${c.combosDisplay!==1?'s':''}`;
+    return`<tr>
+      <td style="font-size:10.5px;color:var(--text-l);text-align:center;">${idx+1}</td>
+      <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.name}">${c.name}</td>
+      <td>${stBadge}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:var(--blue);">₹${c.effCost.toFixed(2)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;">₹${c.mrp.toFixed(2)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;color:${mColor};font-weight:600;">${c.combinedM.toFixed(1)}%</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;">${c.closing>0?c.closing.toLocaleString('en-IN'):'—'}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-align:right;${c.combosDisplay===0?'color:var(--red);':c.combosDisplay<3?'color:var(--amber);':'color:var(--green);'}">${combosStr}</td>
+    </tr>`;
+  }).join('');
+
+  result.innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+      <div class="anchor-card" style="flex:1;min-width:260px;margin-bottom:0;">
+        <div class="anchor-card-title">Anchor Item — "Buy This →"</div>
+        <div class="anchor-name">${anchor.name}</div>
+        <div class="anchor-meta">MRP ₹${anchor.mrp.toFixed(2)} &nbsp;|&nbsp; Cost ₹${anchor.effCost.toFixed(2)} &nbsp;|&nbsp; <span class="anchor-avail">₹${anchorMarginAmt.toFixed(2)} margin available (${anchor.grossM.toFixed(1)}%)</span></div>
+        <div class="anchor-meta" style="margin-top:4px;">Stock: ${anchor.closing>0?anchor.closing.toLocaleString('en-IN'):' —'} pcs</div>
+      </div>
+      <button class="btn btn-g" style="font-size:11px;padding:5px 12px;flex-shrink:0;" onclick="exportCcCSV()">⬇ Export CSV</button>
+    </div>
+    <div class="slider-block">
+      <div class="slider-block-title">Min Combined Margin after giving free item</div>
+      <div class="slider-row">
+        <input type="range" id="cc-slider" min="0" max="30" value="${minM}" step="1" oninput="ccSliderChange(this.value)">
+        <span id="cc-slider-val" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--brand);">${minM}%</span>
+        <span style="font-size:11px;color:var(--text-m);">&nbsp;${candidates.length} candidates shown</span>
+      </div>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-m);margin-bottom:10px;">
+      Formula: <span style="font-family:'IBM Plex Mono',monospace;">(Anchor MRP − Anchor Cost − Free Item Cost) ÷ Anchor MRP</span>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="cc-tbl">
+      <thead><tr>
+        <th style="width:32px;">#</th>
+        <th style="min-width:180px;">Free Item "→ Get This Free"</th>
+        <th>Stock Status</th>
+        <th style="text-align:right;">Free Item Cost ₹</th>
+        <th style="text-align:right;">Free Item MRP ₹</th>
+        <th style="text-align:right;">Combined Margin %</th>
+        <th style="text-align:right;">Free Item Stock</th>
+        <th style="text-align:right;">Combos Possible</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+    <div style="font-size:11px;color:var(--text-m);margin-top:10px;background:var(--gold-l);border:1px solid #E8D080;border-radius:6px;padding:8px 12px;">
+      ⚠️ Combos Possible = min(Anchor stock, Free item stock). Consider transport & purchase discounts before finalising.
+    </div>`;
+}
+
+function ccSliderChange(val){
+  ccMinMargin=parseInt(val);
+  const el=document.getElementById('cc-slider-val');
+  if(el)el.textContent=val+'%';
+  if(ccAnchor)ccAnalyse();
+}
+
+function exportCcCSV(){
+  if(!ccAnchor)return;
+  const anchor=items.find(i=>i.name===ccAnchor);
+  const minM=ccMinMargin;
+  const candidates=items
+    .filter(i=>i.name!==anchor.name)
+    .map(i=>({...i,combinedM:(anchor.mrp-anchor.effCost-i.effCost)/anchor.mrp*100,
+      combosDisplay:Math.min(anchor.closing>0?anchor.closing:Infinity,i.closing>0?i.closing:Infinity)}))
+    .filter(i=>i.combinedM>=minM)
+    .sort((a,b)=>b.combinedM-a.combinedM);
+  const rows=[['#','Anchor Item','Anchor MRP','Anchor Cost','Anchor Margin %',
+    'Free Item','Free Item Cost','Free Item MRP','Combined Margin %','Free Item Stock','Combos Possible']];
+  candidates.forEach((c,idx)=>{
+    const combo=c.combosDisplay===Infinity?'unknown':Math.floor(c.combosDisplay);
+    rows.push([idx+1,anchor.name,anchor.mrp.toFixed(2),anchor.effCost.toFixed(2),anchor.grossM.toFixed(1)+'%',
+      c.name,c.effCost.toFixed(2),c.mrp.toFixed(2),c.combinedM.toFixed(1)+'%',c.closing||'—',combo]);
+  });
+  dlCSV(rows,`Shreemant_CrossCombo_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+// ── SHARED CSV DOWNLOAD ───────────────────────────────────────────────────────
+function dlCSV(rows,filename){
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=filename;a.click();
+}
+
+// ── COLUMN RESIZE ─────────────────────────────────────────────────────────────
+function initColResize(){
+  document.querySelectorAll('#otable thead th:not(.col-chk)').forEach(th=>{
+    const handle=th.querySelector('.resize-handle');
+    if(!handle)return;
+    let startX,startW;
+    handle.addEventListener('mousedown',e=>{
+      e.stopPropagation();e.preventDefault();
+      startX=e.clientX;startW=th.offsetWidth;
+      handle.classList.add('rsz');
+      const move=e=>{const w=Math.max(55,startW+(e.clientX-startX));th.style.cssText+=`;min-width:${w}px;max-width:${w}px;width:${w}px;`;};
+      const up=()=>{handle.classList.remove('rsz');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};
+      document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+    });
+  });
+}
+</script>
+</body>
+</html>
