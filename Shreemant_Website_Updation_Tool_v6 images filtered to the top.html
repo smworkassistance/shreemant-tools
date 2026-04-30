@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shreemant — Website Updation Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red:#8B1A1A; --red-dark:#5C0E0E; --gold:#C8952A; --gold-lt:#F0D080;
+      --cream:#F7EED8; --surface:#FFFDF6; --border:#E2CFA0; --text:#1E0D0D;
+      --muted:#907060; --ok:#2A7A3B; --ok-bg:#EAF7ED;
+      --err:#8B1A1A; --err-bg:#FDEAEA; --warn:#8A6000; --warn-bg:#FFF8E0;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--text); min-height:100vh; }
+
+    /* HEADER */
+    header {
+      background:var(--red-dark); color:var(--gold-lt);
+      padding:22px 40px 18px; display:flex; align-items:center; gap:20px;
+      border-bottom:3px solid var(--gold);
+    }
+    .logo { font-family:'Playfair Display',serif; font-size:30px; font-style:italic; line-height:1; }
+    .logo span { color:var(--gold); }
+    .tagline { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); opacity:.8; margin-top:4px; }
+    .tool-badge {
+      margin-left:auto; background:rgba(200,149,42,.15); border:1px solid rgba(200,149,42,.35);
+      color:var(--gold-lt); font-size:11px; font-weight:600; letter-spacing:1px;
+      text-transform:uppercase; padding:5px 14px; border-radius:20px;
+    }
+
+    main { max-width:960px; margin:0 auto; padding:32px 24px 60px; }
+
+    /* SECTION TITLE */
+    .stitle {
+      font-family:'Playfair Display',serif; font-size:17px; font-weight:700;
+      color:var(--red-dark); margin-bottom:14px; display:flex; align-items:center; gap:10px;
+    }
+    .stitle::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* UPLOAD GRID */
+    .upload-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:28px; }
+    .ucard {
+      background:var(--surface); border:2px dashed var(--border); border-radius:12px;
+      padding:22px 16px; text-align:center; cursor:pointer;
+      transition:border-color .2s, background .2s, transform .15s; position:relative;
+    }
+    .ucard:hover { border-color:var(--gold); background:#FFFBF0; transform:translateY(-1px); }
+    .ucard.loaded { border-color:var(--ok); border-style:solid; background:var(--ok-bg); }
+    .ucard.err    { border-color:var(--err); border-style:solid; background:var(--err-bg); }
+    .ucard input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .uicon  { font-size:32px; margin-bottom:10px; }
+    .ulabel { font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:var(--red-dark); margin-bottom:4px; }
+    .usub   { font-size:11px; color:var(--muted); line-height:1.5; }
+    .ustatus {
+      margin-top:10px; font-size:11px; font-weight:600; padding:3px 10px;
+      border-radius:20px; display:inline-block;
+    }
+    .s-ok   { background:var(--ok-bg); color:var(--ok); }
+    .s-err  { background:var(--err-bg); color:var(--err); }
+    .s-none { background:#F0EAD8; color:var(--muted); }
+    .s-opt  { background:#F0EAD8; color:var(--muted); font-style:italic; }
+
+    /* PROCESS BTN */
+    .proc-row { display:flex; gap:14px; align-items:center; margin-bottom:28px; flex-wrap:wrap; }
+    .btn-proc {
+      background:var(--red-dark); color:var(--gold-lt); border:none; border-radius:10px;
+      padding:13px 40px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600;
+      cursor:pointer; transition:.2s; box-shadow:0 4px 14px rgba(92,14,14,.3);
+    }
+    .btn-proc:hover:not(:disabled) { background:var(--red); transform:translateY(-2px); }
+    .btn-proc:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+    .btn-dl {
+      background:var(--gold); color:var(--red-dark); border:none; border-radius:10px;
+      padding:13px 36px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700;
+      cursor:pointer; transition:.2s; box-shadow:0 4px 14px rgba(200,149,42,.3);
+    }
+    .btn-dl:hover { background:var(--gold-lt); transform:translateY(-2px); }
+
+    /* LOG */
+    #log-box {
+      background:#160808; color:#F0D080; font-family:'Courier New',monospace; font-size:11.5px;
+      border-radius:10px; padding:14px 18px; max-height:220px; overflow-y:auto;
+      line-height:1.8; margin-bottom:22px;
+    }
+    #log-box .ok   { color:#7BE8A0; }
+    #log-box .warn { color:#FFD060; }
+    #log-box .err  { color:#FF8080; }
+    #log-box .info { color:#90C8FF; }
+    #log-box .dim  { color:#604040; }
+
+    /* STATS */
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px; }
+    .scard { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+    .snum  { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; color:var(--red-dark); }
+    .slbl  { font-size:10px; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.8px; }
+
+    /* PREVIEW */
+    .preview-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:22px; }
+    .phead {
+      background:var(--red-dark); color:var(--gold-lt); padding:11px 18px;
+      font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:space-between;
+    }
+    .tbl-wrap { overflow-x:auto; max-height:320px; overflow-y:auto; }
+    table { width:100%; border-collapse:collapse; font-size:12px; }
+    thead th {
+      background:#F0E4C8; color:var(--red-dark); padding:8px 10px; font-weight:700;
+      text-align:left; position:sticky; top:0; white-space:nowrap; border-bottom:1px solid var(--border);
+    }
+    tbody tr:nth-child(even) { background:#FFFBF0; }
+    tbody tr:hover { background:#FFF0D0; }
+    tbody td { padding:7px 10px; border-bottom:1px solid #F0E8D0; white-space:nowrap; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+    .b-mrp { background:#E8EDFF; color:#2040A0; }
+    .b-net { background:#FFF0D0; color:#7A4000; }
+    .b-in  { background:var(--ok-bg); color:var(--ok); }
+    .b-out { background:var(--err-bg); color:var(--err); }
+
+    /* CATEGORY FILTER */
+    .filter-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:22px; }
+    .filter-head { background:var(--red-dark); color:var(--gold-lt); padding:11px 18px; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .filter-head-btns { display:flex; gap:8px; }
+    .fbtn { background:rgba(200,149,42,.2); border:1px solid rgba(200,149,42,.4); color:var(--gold-lt); font-size:11px; font-weight:600; padding:3px 12px; border-radius:20px; cursor:pointer; transition:.15s; }
+    .fbtn:hover { background:rgba(200,149,42,.4); }
+    .filter-body { padding:16px 18px; display:flex; flex-wrap:wrap; gap:8px; max-height:220px; overflow-y:auto; }
+    .fchip { display:flex; align-items:center; gap:6px; background:#F5EDD8; border:1px solid var(--border); border-radius:20px; padding:4px 12px; cursor:pointer; transition:.15s; user-select:none; }
+    .fchip:hover { border-color:var(--gold); background:#FFF5DC; }
+    .fchip input[type=checkbox] { accent-color:var(--red-dark); width:13px; height:13px; cursor:pointer; }
+    .fchip label { font-size:11.5px; font-weight:500; color:var(--text); cursor:pointer; white-space:nowrap; }
+    .fchip .fcount { font-size:10px; color:var(--muted); font-weight:400; }
+    .fchip.deselected { opacity:.45; background:#EEEAE0; }
+    .filter-footer { padding:10px 18px; border-top:1px solid var(--border); background:#FDF8EE; font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .filter-footer strong { color:var(--red-dark); }
+    .toggle-wrap { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .toggle-label { font-size:11.5px; font-weight:600; color:var(--red-dark); }
+    .toggle-switch { position:relative; width:38px; height:20px; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider { position:absolute; inset:0; background:#D0C0A0; border-radius:20px; cursor:pointer; transition:.2s; }
+    .toggle-slider:before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; }
+    .toggle-switch input:checked + .toggle-slider { background:var(--red-dark); }
+    .toggle-switch input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+    .hidden { display:none!important; }
+    .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(240,208,128,.3); border-top-color:var(--gold-lt); border-radius:50%; animation:spin .7s linear infinite; margin-right:6px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">श्रीमंत <span>Apna Bazar</span></div>
+    <div class="tagline">Baat Bharose Ki</div>
+  </div>
+  <div class="tool-badge">Website Updation Tool</div>
+</header>
+
+<main>
+
+  <div class="stitle">📂 Upload Files</div>
+
+  <div class="upload-grid">
+    <div class="ucard" id="card-net">
+      <input type="file" id="file-net" accept=".xlsx,.xls,.csv" onchange="handleFile('net',this)">
+      <div class="uicon">📊</div>
+      <div class="ulabel">Net Stock</div>
+      <div class="usub">Busy → Net Stock Sheet<br>All items + MRP Wise flag</div>
+      <div class="ustatus s-none" id="status-net">Not uploaded</div>
+    </div>
+    <div class="ucard" id="card-mrp">
+      <input type="file" id="file-mrp" accept=".xlsx,.xls,.csv" onchange="handleFile('mrp',this)">
+      <div class="uicon">🏷️</div>
+      <div class="ulabel">MRP Wise Stock</div>
+      <div class="usub">Busy → MRP Wise Stock<br>Multi-MRP item rows</div>
+      <div class="ustatus s-none" id="status-mrp">Not uploaded</div>
+    </div>
+    <div class="ucard" id="card-img">
+      <input type="file" id="file-img" accept=".xlsx,.xls,.csv" onchange="handleFile('img',this)">
+      <div class="uicon">🖼️</div>
+      <div class="ulabel">Image Links</div>
+      <div class="usub">Optional — product image URLs<br>Name, Thumbnail, Image 1–4</div>
+      <div class="ustatus s-opt" id="status-img">Optional</div>
+    </div>
+  </div>
+
+  <div class="proc-row">
+    <button class="btn-proc" id="btn-proc" onclick="processFiles()" disabled>
+      ⚙️ Process &amp; Generate
+    </button>
+    <button class="btn-dl hidden" id="btn-dl" onclick="downloadOutput()">
+      ⬇️ Download Excel
+    </button>
+  </div>
+
+  <div id="out-section" class="hidden">
+    <div class="stitle">🖥️ Processing Log</div>
+    <div id="log-box"></div>
+
+    <div class="stitle">📈 Summary</div>
+    <div class="stats-grid">
+      <div class="scard"><div class="snum" id="s-mrp">—</div><div class="slbl">MRP Wise Rows</div></div>
+      <div class="scard"><div class="snum" id="s-net">—</div><div class="slbl">Non-MRP Items</div></div>
+      <div class="scard"><div class="snum" id="s-flt">—</div><div class="slbl">Filtered (≤0 stock)</div></div>
+      <div class="scard"><div class="snum" id="s-tot">—</div><div class="slbl">Final Output Rows</div></div>
+    </div>
+
+    <div class="stitle">🏷️ Filter by Category</div>
+    <div class="filter-wrap" id="filter-wrap">
+      <div class="filter-head">
+        <span>Deselect categories to exclude from download</span>
+        <div class="filter-head-btns">
+          <button class="fbtn" onclick="toggleAllCats(true)">✓ Select All</button>
+          <button class="fbtn" onclick="toggleAllCats(false)">✗ Deselect All</button>
+        </div>
+      </div>
+      <div class="filter-body" id="filter-body"></div>
+      <div class="filter-footer" id="filter-footer">
+        <span>Selected: <strong id="fsel-count">—</strong> categories &nbsp;|&nbsp; Rows in download: <strong id="frow-count">—</strong></span>
+        <div class="toggle-wrap">
+          <span class="toggle-label">🖼️ Images First (per category)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="img-sort-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="stitle">👁️ Preview</div>
+    <div class="preview-wrap">
+      <div class="phead">
+        <span>Output — first 60 rows</span>
+        <span id="pcnt" style="font-size:11px;opacity:.7;"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead id="pt-head"></thead><tbody id="pt-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+const S = {
+  netWB:null, mrpWB:null, imgWB:null,
+  output:[],
+  outCols:['Name','Category','Price','Description','Size','Color','Tag','Brand',
+           'Stock','Availability','Thumbnail','Image1','Image2','Image3','Image4','MRP']
+};
+
+// ── File handling ──
+function handleFile(type, input) {
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      S[type+'WB'] = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      setCard(type,'ok','✓ '+file.name);
+    } catch(err) {
+      setCard(type,'err','✗ Read error');
+    }
+    document.getElementById('btn-proc').disabled = !(S.netWB && S.mrpWB);
+  };
+  r.readAsArrayBuffer(file);
+}
+function setCard(type, st, txt) {
+  const card=document.getElementById('card-'+type), badge=document.getElementById('status-'+type);
+  card.className='ucard'+(st==='ok'?' loaded':st==='err'?' err':'');
+  badge.className='ustatus '+(st==='ok'?'s-ok':st==='err'?'s-err':'s-none');
+  badge.textContent=txt;
+}
+
+// ── Logging ──
+function log(msg, t='info') {
+  const box=document.getElementById('log-box');
+  const d=document.createElement('div'); d.className=t;
+  const prefix = {ok:'✓ ',err:'✗ ',warn:'⚠ ',info:'› ',dim:'  '}[t]||'› ';
+  d.textContent=prefix+msg; box.appendChild(d); box.scrollTop=box.scrollHeight;
+}
+function clearLog(){ document.getElementById('log-box').innerHTML=''; }
+
+// ── Utilities ──
+function getRaw(wb) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  // raw:true → JS numbers for numeric cells; defval:null for blanks
+  return XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+}
+function str(v){ return (v===null||v===undefined)?'':String(v).trim(); }
+function num(v){
+  if(v===null||v===undefined||v==='') return 0;
+  if(typeof v==='number') return v;
+  return parseFloat(String(v).replace(/,/g,''))||0;
+}
+function isEmpty(row){ return !row || row.every(c=>c===null||c===undefined||String(c).trim()===''); }
+function isTotalRow(row){
+  if(!row) return false;
+  return str(row[0])==='' && row.some(c=>c!==null && String(c).toLowerCase().includes('total'));
+}
+
+// ── Column finders ──
+// Fuzzy: checks if header CONTAINS the pattern (for unambiguous columns)
+function findCol(header, patterns) {
+  for(const pat of patterns){
+    const idx = header.findIndex(h => h!==null && String(h).trim().toLowerCase().includes(pat.toLowerCase()));
+    if(idx!==-1) return idx;
+  }
+  return -1;
+}
+// Exact: header must EQUAL the pattern exactly (for columns like "Group" vs "Parent Group")
+function findColExact(header, exact) {
+  const idx = header.findIndex(h => h!==null && String(h).trim().toLowerCase()===exact.toLowerCase());
+  return idx;
+}
+
+// ── Find header row ──
+function findHeaderRow(raw, marker) {
+  for(let i=0; i<Math.min(raw.length,12); i++){
+    if(!raw[i]) continue;
+    for(const c of raw[i]){
+      if(c!==null && String(c).trim().toLowerCase()===marker.toLowerCase()) return i;
+    }
+  }
+  return 4; // fallback
+}
+
+// ════════════════════════════════════════════
+//  PARSE NET STOCK
+//  Columns: Item Details | Sales Price | MRP | Parent Group | Qty. | Unit | Group | MRP Wise Stock
+// ════════════════════════════════════════════
+function parseNetStock(wb) {
+  const raw   = getRaw(wb);
+  const hIdx  = findHeaderRow(raw, 'Item Details');
+  const hdr   = (raw[hIdx]||[]).map(str);
+
+  log(`Net Stock: header at row ${hIdx+1}`, 'info');
+  log(`Net Stock: [${hdr.join(' | ')}]`, 'dim');
+
+  const col = {
+    name:        findCol(hdr, ['item details']),
+    salesPrice:  findCol(hdr, ['sales price','sale price']),
+    mrp:         findColExact(hdr, 'mrp'),           // exact to avoid "MRP Wise Stock"
+    parentGroup: findCol(hdr, ['parent group']),
+    qty:         findCol(hdr, ['qty','quantity']),
+    unit:        findCol(hdr, ['unit']),
+    group:       findColExact(hdr, 'group'),          // exact to avoid "Parent Group"
+    mrpWiseFlag: findCol(hdr, ['mrp wise stock','mrp wise']),
+  };
+
+  log(`Net Stock cols: name=${col.name} price=${col.salesPrice} mrp=${col.mrp} parentGrp=${col.parentGroup} qty=${col.qty} group=${col.group} flag=${col.mrpWiseFlag}`, 'dim');
+
+  const items = [];
+  for(let i=hIdx+1; i<raw.length; i++){
+    const row = raw[i];
+    if(isEmpty(row)) continue;
+    if(isTotalRow(row)) continue;
+
+    const name = str(row[col.name]);
+    if(!name) continue;
+
+    const flagRaw = str(row[col.mrpWiseFlag]).toUpperCase();
+    const isMRPWise = (flagRaw==='Y'||flagRaw==='YES'||flagRaw==='TRUE'||flagRaw==='T');
+
+    items.push({
+      name,
+      salesPrice:  num(row[col.salesPrice]),
+      mrp:         num(row[col.mrp]),
+      parentGroup: str(row[col.parentGroup]),
+      qty:         num(row[col.qty]),
+      unit:        str(row[col.unit]),
+      group:       str(row[col.group]),
+      isMRPWise,
+    });
+  }
+  log(`Net Stock: ${items.length} items parsed`, 'ok');
+  return items;
+}
+
+// ════════════════════════════════════════════
+//  PARSE MRP WISE
+//  Columns: Item Details | MRP | Sales Price | Qty. | Unit | Group | MRP Wise
+//  Forward fill: Item Details, Group, MRP Wise (flag)
+//  Each row → separate output row (different MRP variant)
+// ════════════════════════════════════════════
+function parseMRPWise(wb) {
+  const raw  = getRaw(wb);
+  const hIdx = findHeaderRow(raw, 'Item Details');
+  const hdr  = (raw[hIdx]||[]).map(str);
+
+  log(`MRP Wise: header at row ${hIdx+1}`, 'info');
+  log(`MRP Wise: [${hdr.join(' | ')}]`, 'dim');
+
+  const col = {
+    name:  findCol(hdr, ['item details']),
+    mrp:   findColExact(hdr, 'mrp'),
+    price: findCol(hdr, ['sales price','sale price']),
+    qty:   findCol(hdr, ['qty','quantity']),
+    unit:  findCol(hdr, ['unit']),
+    group: findColExact(hdr, 'group'),    // exact to avoid partial "mrp wise" match
+    flag:  findCol(hdr, ['mrp wise']),
+  };
+
+  log(`MRP Wise cols: name=${col.name} mrp=${col.mrp} price=${col.price} qty=${col.qty} group=${col.group} flag=${col.flag}`, 'dim');
+
+  // Warn if any critical col missing
+  ['name','mrp','price','qty'].forEach(k=>{
+    if(col[k]===-1) log(`MRP Wise: "${k}" column not found!`, 'warn');
+  });
+
+  // Forward fill state
+  let ffName='', ffGroup='', ffFlag='';
+
+  const items = [];
+  for(let i=hIdx+1; i<raw.length; i++){
+    const row = raw[i];
+    if(isEmpty(row)) continue;
+    if(isTotalRow(row)) continue;
+
+    // ── Forward fill: name, group, flag ──
+    const rName  = str(row[col.name]);
+    const rGroup = str(row[col.group]);
+    const rFlag  = str(row[col.flag]);
+
+    if(rName)  ffName  = rName;
+    if(rGroup) ffGroup = rGroup;
+    if(rFlag)  ffFlag  = rFlag;
+
+    if(!ffName) continue;   // nothing forward-filled yet, skip
+
+    // ── Per-row values (NOT forward filled) ──
+    const mrp   = num(row[col.mrp]);
+    const price = num(row[col.price]);
+    const qty   = num(row[col.qty]);
+    const unit  = str(row[col.unit]);
+
+    // Skip rows with ALL zero values AND no new name (truly blank separator rows)
+    if(mrp===0 && price===0 && qty===0 && !rName) continue;
+
+    items.push({ name:ffName, mrp, salesPrice:price, qty, unit, group:ffGroup });
+  }
+
+  log(`MRP Wise: ${items.length} rows parsed`, 'ok');
+  return items;
+}
+
+// ════════════════════════════════════════════
+//  PARSE IMAGE LINKS  (optional)
+// ════════════════════════════════════════════
+function parseImageLinks(wb) {
+  const raw  = getRaw(wb);
+  const hIdx = findHeaderRow(raw, 'Name');
+  const hdr  = (raw[hIdx]||[]).map(str);
+  const col  = {
+    name:  findColExact(hdr,'name'),
+    thumb: findCol(hdr,["thumbnail'","thumbnail",'thumb']),
+    img1:  findCol(hdr,["image 1'","image 1",'img1','image1']),
+    img2:  findCol(hdr,['image 2','img2','image2']),
+    img3:  findCol(hdr,['image 3','img3','image3']),
+    img4:  findCol(hdr,['image 4','img4','image4']),
+  };
+  const map = new Map();
+  for(let i=hIdx+1; i<raw.length; i++){
+    const row=raw[i]; if(isEmpty(row)) continue;
+    const name=str(row[col.name]); if(!name) continue;
+    map.set(name.toLowerCase(), {
+      thumbnail: str(row[col.thumb]),
+      img1: str(row[col.img1]), img2: str(row[col.img2]),
+      img3: str(row[col.img3]), img4: str(row[col.img4]),
+    });
+  }
+  log(`Image Links: ${map.size} records loaded`, 'ok');
+  return map;
+}
+
+// ════════════════════════════════════════════
+//  PROCESS
+// ════════════════════════════════════════════
+function processFiles() {
+  const btn = document.getElementById('btn-proc');
+  btn.innerHTML = '<span class="spinner"></span> Processing…';
+  btn.disabled  = true;
+  document.getElementById('out-section').classList.remove('hidden');
+  document.getElementById('btn-dl').classList.add('hidden');
+  clearLog();
+  setTimeout(_doProcess, 80);
+}
+
+function _doProcess() {
+  const btn = document.getElementById('btn-proc');
+  try {
+    log('Parsing Net Stock…', 'info');
+    const netItems = parseNetStock(S.netWB);
+
+    log('Parsing MRP Wise…', 'info');
+    const mrpItems = parseMRPWise(S.mrpWB);
+
+    let imgMap = new Map();
+    if(S.imgWB){ log('Parsing Image Links…','info'); imgMap = parseImageLinks(S.imgWB); }
+    else log('Image Links not uploaded — image columns will be blank','warn');
+
+    // Non-MRP items = Net Stock items where isMRPWise = false
+    const nonMRP = netItems.filter(it => !it.isMRPWise);
+    log(`Non-MRP items from Net Stock: ${nonMRP.length}`, 'info');
+
+    const out=[]; let fMRP=0, fNet=0;
+
+    // ── MRP Wise rows → output ──
+    for(const item of mrpItems){
+      if(item.qty <= 0){ fMRP++; continue; }
+      const imgs = imgMap.get(item.name.toLowerCase()) || {};
+      out.push({
+        Name:item.name,         Category:item.group,
+        Price:item.salesPrice,  Description:'',
+        Size:'',                Color:'',
+        Tag:'',                 Brand:'',
+        Stock:item.qty,         Availability:'In Stock',
+        Thumbnail:imgs.thumbnail||'', Image1:imgs.img1||'',
+        Image2:imgs.img2||'',   Image3:imgs.img3||'',
+        Image4:imgs.img4||'',   MRP:item.mrp,
+        _src:'MRP Wise'
+      });
+    }
+    const mrpAdded = out.length;
+    log(`MRP Wise rows added: ${mrpAdded}  (${fMRP} filtered — zero/neg stock)`, 'ok');
+
+    // ── Non-MRP rows → output ──
+    for(const item of nonMRP){
+      if(item.qty <= 0){ fNet++; continue; }
+      const imgs = imgMap.get(item.name.toLowerCase()) || {};
+      out.push({
+        Name:item.name,         Category:item.parentGroup,
+        Price:item.salesPrice,  Description:'',
+        Size:'',                Color:'',
+        Tag:'',                 Brand:'',
+        Stock:item.qty,         Availability:'In Stock',
+        Thumbnail:imgs.thumbnail||'', Image1:imgs.img1||'',
+        Image2:imgs.img2||'',   Image3:imgs.img3||'',
+        Image4:imgs.img4||'',   MRP:item.mrp,
+        _src:'Net Stock'
+      });
+    }
+    const netAdded = out.length - mrpAdded;
+    log(`Non-MRP rows added: ${netAdded}  (${fNet} filtered — zero/neg stock)`, 'ok');
+    log(`Total output rows: ${out.length}`, 'ok');
+
+    S.output = out;
+    document.getElementById('s-mrp').textContent = mrpAdded.toLocaleString();
+    document.getElementById('s-net').textContent = netAdded.toLocaleString();
+    document.getElementById('s-flt').textContent = (fMRP+fNet).toLocaleString();
+    document.getElementById('s-tot').textContent = out.length.toLocaleString();
+
+    renderPreview(out);
+    buildCategoryFilter(out);
+    document.getElementById('btn-dl').classList.remove('hidden');
+    log('Done! Download button ready ✓', 'ok');
+
+  } catch(err) {
+    log('Fatal error: '+err.message, 'err');
+    console.error(err);
+  }
+  btn.innerHTML='⚙️ Re-process';
+  btn.disabled = false;
+}
+
+// ── Preview ──
+function renderPreview(rows) {
+  const COLS=['Name','Category','Price','MRP','Stock','Availability','_src'];
+  const LBLS=['Name','Category','Price','MRP','Stock','Availability','Source'];
+  const thead=document.getElementById('pt-head'), tbody=document.getElementById('pt-body');
+  thead.innerHTML=''; tbody.innerHTML='';
+  const htr=document.createElement('tr');
+  LBLS.forEach(l=>{ const th=document.createElement('th'); th.textContent=l; htr.appendChild(th); });
+  thead.appendChild(htr);
+  rows.slice(0,60).forEach(row=>{
+    const tr=document.createElement('tr');
+    COLS.forEach(c=>{
+      const td=document.createElement('td');
+      if(c==='_src'){
+        const b=document.createElement('span');
+        b.className='badge '+(row[c]==='MRP Wise'?'b-mrp':'b-net');
+        b.textContent=row[c]; td.appendChild(b);
+      } else if(c==='Availability'){
+        const b=document.createElement('span');
+        b.className='badge '+(row[c]==='In Stock'?'b-in':'b-out');
+        b.textContent=row[c]; td.appendChild(b);
+      } else {
+        td.textContent=row[c]??''; td.title=row[c]??'';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById('pcnt').textContent=`Showing ${Math.min(60,rows.length)} of ${rows.length} rows`;
+}
+
+// ── Category Filter ──
+function buildCategoryFilter(rows) {
+  // Count rows per category
+  const catMap = new Map();
+  rows.forEach(r => {
+    const c = r.Category || '(No Category)';
+    catMap.set(c, (catMap.get(c)||0) + 1);
+  });
+  const sorted = [...catMap.entries()].sort((a,b) => a[0].localeCompare(b[0]));
+
+  const body = document.getElementById('filter-body');
+  body.innerHTML = '';
+  sorted.forEach(([cat, cnt], i) => {
+    const chip = document.createElement('div');
+    chip.className = 'fchip';
+    chip.id = 'chip-'+i;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = true;
+    cb.id = 'cb-'+i; cb.dataset.cat = cat;
+    cb.addEventListener('change', () => {
+      chip.classList.toggle('deselected', !cb.checked);
+      updateFilterFooter();
+    });
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'cb-'+i;
+    lbl.innerHTML = `${cat} <span class="fcount">(${cnt})</span>`;
+    chip.appendChild(cb); chip.appendChild(lbl);
+    body.appendChild(chip);
+  });
+  updateFilterFooter();
+}
+
+function getSelectedCats() {
+  const selected = new Set();
+  document.querySelectorAll('#filter-body input[type=checkbox]').forEach(cb => {
+    if(cb.checked) selected.add(cb.dataset.cat);
+  });
+  return selected;
+}
+
+function updateFilterFooter() {
+  const selected = getSelectedCats();
+  const rowCount = S.output.filter(r => selected.has(r.Category || '(No Category)')).length;
+  document.getElementById('fsel-count').textContent = selected.size;
+  document.getElementById('frow-count').textContent = rowCount.toLocaleString();
+}
+
+function toggleAllCats(state) {
+  document.querySelectorAll('#filter-body input[type=checkbox]').forEach(cb => {
+    cb.checked = state;
+    document.getElementById('chip-'+cb.id.split('-')[1]).classList.toggle('deselected', !state);
+  });
+  updateFilterFooter();
+}
+
+// ── Download ──
+function downloadOutput() {
+  if(!S.output.length) return;
+  const selected = getSelectedCats();
+  let filtered = S.output.filter(r => selected.has(r.Category || '(No Category)'));
+
+  // Images-first sort: within each category, items with Thumbnail come first
+  if(document.getElementById('img-sort-toggle').checked) {
+    filtered = filtered.slice().sort((a, b) => {
+      if(a.Category < b.Category) return -1;
+      if(a.Category > b.Category) return 1;
+      const aHas = a.Thumbnail ? 0 : 1;
+      const bHas = b.Thumbnail ? 0 : 1;
+      return aHas - bHas;
+    });
+  }
+
+  const COLS = S.outCols;
+  const wsData = [COLS];
+  filtered.forEach(r => wsData.push(COLS.map(c => r[c]??'')));
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [
+    {wch:42},{wch:22},{wch:10},{wch:15},{wch:8},{wch:8},{wch:8},{wch:15},
+    {wch:10},{wch:12},{wch:50},{wch:50},{wch:50},{wch:50},{wch:50},{wch:10}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Product Upload');
+  const ts = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Shreemant_WebsiteUpload_${ts}.xlsx`);
+}
+</script>
+</body>
+</html>
