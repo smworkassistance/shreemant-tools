@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C0392B;
+    --red-dark: #96281B;
+    --red-light: #E74C3C;
+    --gold: #F4A61D;
+    --gold-light: #F8C456;
+    --cream: #FDF6EC;
+    --cream-dark: #F5E6C8;
+    --text: #1A0A00;
+    --text-muted: #7A5C3A;
+    --card-bg: #FFFFFF;
+    --border: rgba(192,57,43,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--red);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    background: rgba(244,166,29,0.12);
+    border-radius: 50%;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px 24px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-icon {
+    width: 48px; height: 48px;
+    background: var(--gold);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--red-dark);
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+
+  .brand-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+  }
+
+  .brand-text p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 0 0 auto;
+    width: min(280px, 100%);
+  }
+
+  .search-wrap input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border-radius: 50px;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+  }
+
+  .search-wrap input::placeholder { color: rgba(255,255,255,0.55); }
+  .search-wrap input:focus { background: rgba(255,255,255,0.22); }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.6;
+  }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    background: var(--red-dark);
+    padding: 8px 24px;
+  }
+
+  .stats-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  #tool-count {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* ── GRID ── */
+  #tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  /* ── TOOL CARD ── */
+  .tool-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    padding: 22px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    cursor: pointer;
+    transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.35s ease both;
+  }
+
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(192,57,43,0.13);
+    border-color: rgba(192,57,43,0.25);
+  }
+
+  .tool-card:hover::before { opacity: 1; }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #FEF3E2, #FDDFA8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .card-meta {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+
+  .launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--red);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .launch-btn:hover {
+    background: var(--red-light);
+    transform: scale(1.04);
+  }
+
+  .launch-btn svg { flex-shrink: 0; }
+
+  /* ── EMPTY / LOADING / ERROR ── */
+  .state-box {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .state-box .icon { font-size: 48px; margin-bottom: 16px; }
+  .state-box h3 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+  .state-box p { font-size: 14px; line-height: 1.6; }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--cream-dark);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  footer strong { color: var(--red); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 560px) {
+    .header-inner { padding: 20px 16px 18px; }
+    .search-wrap { width: 100%; }
+    .brand-text h1 { font-size: 18px; }
+    #tools-grid { grid-template-columns: 1fr; gap: 14px; }
+    main { padding: 24px 14px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <div class="brand-text">
+        <h1>Shreemant Tools</h1>
+        <p>BAAT BHAROSE KI &nbsp;·&nbsp; KHANDWA</p>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search tools…" autocomplete="off">
+    </div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stats-inner">
+    <span id="tool-count">—</span>&nbsp;tools available &nbsp;·&nbsp; Auto-updated from GitHub
+  </div>
+</div>
+
+<main>
+  <div id="tools-grid">
+    <div class="state-box">
+      <div class="spinner"></div>
+      <h3>Loading tools…</h3>
+      <p>Fetching from Shreemant repository</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <strong>Shreemant Apna Bazar</strong> &nbsp;·&nbsp; Staff Portal &nbsp;·&nbsp; All tools are internal use only
+</footer>
+
+<script>
+  const GITHUB_USER = 'smworkassistance';
+  const GITHUB_REPO = 'shreemant-tools';
+  const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`;
+  const BASE_URL = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/`;
+
+  // ── Tool icons based on keywords ──
+  const ICONS = [
+    { keywords: ['po', 'purchase', 'order'],        icon: '🛒' },
+    { keywords: ['bill', 'rate', 'price'],          icon: '💰' },
+    { keywords: ['whatsapp', 'message', 'contact'], icon: '💬' },
+    { keywords: ['stock', 'inventory', 'godown'],   icon: '📦' },
+    { keywords: ['report', 'analytics', 'data'],    icon: '📊' },
+    { keywords: ['planner', 'plan', 'schedule'],    icon: '📅' },
+    { keywords: ['tax', 'account', 'ledger'],       icon: '🧾' },
+    { keywords: ['vendor', 'party', 'supplier'],    icon: '🤝' },
+    { keywords: ['staff', 'team', 'employee'],      icon: '👥' },
+  ];
+
+  function getIcon(name) {
+    const lower = name.toLowerCase();
+    for (const { keywords, icon } of ICONS) {
+      if (keywords.some(k => lower.includes(k))) return icon;
+    }
+    return '🔧';
+  }
+
+  function formatName(filename) {
+    // Remove .html, replace hyphens/underscores with spaces, title-case
+    return filename
+      .replace(/\.html$/i, '')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function formatDate(isoDate) {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function renderCards(files, query = '') {
+    const grid = document.getElementById('tools-grid');
+    const q = query.trim().toLowerCase();
+
+    const filtered = files.filter(f => !q || f.displayName.toLowerCase().includes(q));
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="state-box">
+          <div class="icon">🔍</div>
+          <h3>No tools found</h3>
+          <p>No tools match "<strong>${query}</strong>".<br>Try a different search term.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map((file, i) => `
+      <div class="tool-card" style="animation-delay:${i * 0.05}s" onclick="window.open('${file.url}','_blank')">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div class="card-icon">${getIcon(file.displayName)}</div>
+          <div class="card-name">${file.displayName}</div>
+        </div>
+        <div class="card-footer">
+          <div class="card-meta">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            ${file.date ? formatDate(file.date) : 'Available'}
+          </div>
+          <a class="launch-btn" href="${file.url}" target="_blank" onclick="event.stopPropagation()">
+            Open
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function loadTools() {
+    const grid = document.getElementById('tools-grid');
+    const countEl = document.getElementById('tool-count');
+
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
+
+      // Filter: only .html files, exclude index.html itself
+      const htmlFiles = data
+        .filter(f => f.type === 'file' && f.name.endsWith('.html') && f.name.toLowerCase() !== 'index.html')
+        .map(f => ({
+          name: f.name,
+          displayName: formatName(f.name),
+          url: `${BASE_URL}${f.name}`,
+          date: null // GitHub contents API doesn't include commit date; can be enhanced
+        }));
+
+      if (htmlFiles.length === 0) {
+        grid.innerHTML = `
+          <div class="state-box">
+            <div class="icon">📭</div>
+            <h3>No tools yet</h3>
+            <p>Upload your first <strong>.html</strong> tool to the<br><em>shreemant-tools</em> repository on GitHub.<br>It will appear here automatically.</p>
+          </div>`;
+        countEl.textContent = '0';
+        return;
+      }
+
+      countEl.textContent = htmlFiles.length;
+      window._allTools = htmlFiles;
+      renderCards(htmlFiles);
+
+      // Search
+      document.getElementById('search-input').addEventListener('input', e => {
+        renderCards(window._allTools, e.target.value);
+      });
+
+    } catch (err) {
+      console.error(err);
+      grid.innerHTML = `
+        <div class="state-box">
+          <div class="icon">⚠️</div>
+          <h3>Could not load tools</h3>
+          <p>Make sure the repository is <strong>Public</strong> on GitHub.<br>
+          Also check that GitHub Pages is enabled.<br><br>
+          <small style="opacity:0.7">${err.message}</small></p>
+        </div>`;
+      countEl.textContent = 'Error';
+    }
+  }
+
+  loadTools();
+</script>
+</body>
+</html>
