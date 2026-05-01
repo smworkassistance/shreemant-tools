@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Store Music + Announcement Player (Exact Music Blocks)</title>
+
+<style>
+body{
+font-family:Arial;
+background:#121212;
+color:white;
+text-align:center;
+padding:30px;
+}
+input,button,select{
+padding:8px;
+margin:8px;
+}
+#pattern{
+margin-top:20px;
+background:#1e1e1e;
+padding:15px;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Store Music + Announcement Player</h2>
+
+<label>Music Block Time:</label>
+<input type="number" id="gap" value="30">
+
+<select id="unit">
+<option value="seconds">Seconds</option>
+<option value="minutes">Minutes</option>
+</select>
+
+<br>
+
+<label>
+<input type="checkbox" id="playAllAds">
+Play all announcements together
+</label>
+
+<h3>Add Music Files</h3>
+<input type="file" id="musicFiles" multiple accept="audio/*">
+
+<h3>Add Announcement Files</h3>
+<input type="file" id="adFiles" multiple accept="audio/*">
+
+<br>
+
+<button onclick="startPlayer()">Start Player</button>
+
+<div id="pattern">Pattern preview will appear here</div>
+
+<br>
+
+<audio id="player" controls></audio>
+
+<script>
+
+let musicList=[]
+let adList=[]
+let musicIndex=0
+let adIndex=0
+let playingAd=false
+
+let musicTimer=0
+let blockDuration=0
+
+const player=document.getElementById("player")
+
+function startPlayer(){
+
+musicList=Array.from(document.getElementById("musicFiles").files)
+adList=Array.from(document.getElementById("adFiles").files)
+
+if(musicList.length===0){
+alert("Add music files first")
+return
+}
+
+let gap=document.getElementById("gap").value
+let unit=document.getElementById("unit").value
+
+blockDuration = unit==="minutes" ? gap*60 : gap
+
+generatePattern()
+
+musicIndex=0
+musicTimer=0
+
+playMusic()
+
+setInterval(checkMusicBlock,1000)
+
+}
+
+function generatePattern(){
+
+let gap=document.getElementById("gap").value
+let unit=document.getElementById("unit").value
+let playAll=document.getElementById("playAllAds").checked
+
+let text="Music "+gap+" "+unit+" → "
+
+if(playAll){
+text+="ALL ADS → Music"
+}else{
+text+="ONE AD → Music"
+}
+
+document.getElementById("pattern").innerHTML="<b>Playback Pattern:</b><br>"+text
+
+}
+
+function playMusic(){
+
+playingAd=false
+
+let file=musicList[musicIndex]
+
+player.src=URL.createObjectURL(file)
+player.play()
+
+musicIndex++
+
+if(musicIndex>=musicList.length){
+musicIndex=0
+}
+
+player.onended=playMusic
+
+}
+
+function checkMusicBlock(){
+
+if(playingAd) return
+
+musicTimer++
+
+if(musicTimer>=blockDuration){
+
+musicTimer=0
+
+if(document.getElementById("playAllAds").checked){
+playAllAds()
+}else{
+playSingleAd()
+}
+
+}
+
+}
+
+function playSingleAd(){
+
+if(adList.length===0) return
+
+playingAd=true
+
+player.pause()
+
+let ad=adList[adIndex]
+
+player.src=URL.createObjectURL(ad)
+player.play()
+
+adIndex++
+if(adIndex>=adList.length) adIndex=0
+
+player.onended=()=>{
+playMusic()
+}
+
+}
+
+function playAllAds(){
+
+if(adList.length===0) return
+
+playingAd=true
+
+player.pause()
+
+let i=0
+
+function nextAd(){
+
+if(i>=adList.length){
+playMusic()
+return
+}
+
+player.src=URL.createObjectURL(adList[i])
+player.play()
+
+i++
+
+player.onended=nextAd
+
+}
+
+nextAd()
+
+}
+
+</script>
+
+</body>
+</html>
