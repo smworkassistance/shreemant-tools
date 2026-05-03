@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shreemant Broadcast Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#090909;--s1:#111;--s2:#181818;--s3:#222;--border:#2c2c2c;
+  --gold:#c8960c;--goldb:#f0b429;--red:#c0392b;--orange:#FF6D00;--green:#4CAF50;
+  --text:#e0e0e0;--dim:#666;--muted:#3a3a3a;
+  --music-bg:#071728;--music-ac:#2196F3;--ad-bg:#190900;--ad-ac:#FF6D00;
+}
+/* ── LIGHT THEME ── */
+.theme-light{
+  --bg:#f5f0e8;--s1:#ede8df;--s2:#e3ddd3;--s3:#d8d1c6;--border:#c5bdb0;
+  --gold:#9a6e00;--goldb:#b88000;--red:#c0392b;--orange:#d4540a;--green:#2e7d32;
+  --text:#1a1510;--dim:#5a5248;--muted:#c0b8ae;
+  --music-bg:#ddeeff;--music-ac:#1565C0;--ad-bg:#fff0e5;--ad-ac:#bf4500;
+}
+.theme-light .hdr{background:linear-gradient(135deg,#e8e0d0 0%,#ddd5c0 100%) !important;}
+.theme-light .screen{background:#e0dace !important;}
+.theme-light .tbtn.on,.theme-light .cbtn.play{color:#fff !important;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;transition:background .25s,color .25s;}
+
+.hdr{background:linear-gradient(135deg,#0a0a0a 0%,#130800 100%);border-bottom:2px solid var(--gold);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:5px;color:var(--goldb);}
+.hdr-sub{font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:2px;}
+.status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--dim);}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.dot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+.loop-tag{padding:2px 10px;border:1px solid var(--green);border-radius:2px;color:var(--green);font-size:9px;letter-spacing:1px;}
+
+.wrap{padding:20px 28px;max-width:1200px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:750px){.two-col{grid-template-columns:1fr;}.wrap{padding:14px;}}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:4px;margin-bottom:18px;overflow:hidden;}
+.card-hdr{background:var(--s2);padding:11px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.card-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#000;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.card-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.card-body{padding:18px;}
+
+.dropzone{border:2px dashed var(--border);border-radius:4px;padding:20px;text-align:center;cursor:pointer;position:relative;transition:all .2s;}
+.dropzone:hover{border-color:var(--gold);background:rgba(200,150,12,.04);}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dropzone-icon{font-size:24px;margin-bottom:6px;}
+.dropzone-text{font-size:11px;color:var(--dim);}
+
+.flist{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.fitem{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:9px 12px;display:flex;align-items:center;gap:10px;transition:border-color .2s;}
+.fitem.music-item{cursor:pointer;}
+.fitem.music-item:hover{border-color:var(--music-ac);}
+.fitem.music-item.sel{border-color:var(--music-ac);background:var(--music-bg);}
+.fradio{width:14px;height:14px;accent-color:var(--music-ac);cursor:pointer;flex-shrink:0;}
+.fname{flex:1;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ftag{font-size:9px;padding:2px 7px;border-radius:2px;background:var(--music-bg);color:var(--music-ac);border:1px solid var(--music-ac);flex-shrink:0;}
+.frm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:2px;transition:all .2s;flex-shrink:0;}
+.frm:hover{color:var(--red);background:rgba(192,57,43,.1);}
+
+.aditem{background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:9px 12px;display:flex;align-items:center;gap:10px;}
+.adnum{width:20px;height:20px;border-radius:3px;background:var(--orange);color:#fff;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ad-dur-badge{padding:3px 9px;border-radius:3px;background:var(--ad-bg);border:1px solid var(--ad-ac);color:var(--ad-ac);font-size:10px;flex-shrink:0;white-space:nowrap;}
+
+.srow{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.sgrp{display:flex;flex-direction:column;gap:7px;}
+.slabel{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+.sinput{background:var(--s2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:7px 11px;}
+.sinput:focus{outline:none;border-color:var(--gold);}
+
+.tbtn-wrap{display:flex;}
+.tbtn{padding:7px 16px;background:var(--s2);border:1px solid var(--border);color:var(--dim);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:1px;}
+.tbtn:first-child{border-radius:3px 0 0 3px;}
+.tbtn:last-child{border-radius:0 3px 3px 0;margin-left:-1px;}
+.tbtn.on{background:var(--gold);color:#000;border-color:var(--gold);font-weight:bold;}
+
+.build-btn{padding:9px 22px;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:3px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.build-btn:hover{background:rgba(200,150,12,.1);}
+
+.fade-box{margin-top:14px;padding:14px;background:var(--s2);border-radius:4px;border:1px solid var(--border);display:none;}
+.fade-box.show{display:block;}
+.fade-row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;}
+.range-wrap{display:flex;flex-direction:column;gap:6px;}
+input[type=range]{-webkit-appearance:none;width:150px;height:4px;border-radius:2px;background:var(--s3);outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;}
+.range-val{font-size:13px;color:var(--goldb);font-weight:bold;}
+.range-hint{font-size:9px;color:var(--muted);}
+
+.track-scroll{overflow-x:auto;padding-bottom:6px;}
+.track{display:flex;align-items:stretch;min-width:max-content;gap:2px;padding:8px 0;}
+.pblock{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:3px;padding:10px 6px;min-width:70px;text-align:center;transition:all .25s;}
+.pblock.music-b{background:var(--music-bg);border:1px solid var(--music-ac);color:var(--music-ac);}
+.pblock.ad-b{background:var(--ad-bg);border:1px solid var(--ad-ac);color:var(--ad-ac);}
+.pblock.active-b{box-shadow:0 0 14px currentColor;transform:translateY(-3px);}
+.bl-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.bl-dur{font-size:13px;font-weight:bold;}
+.bl-name{font-size:8px;color:var(--dim);max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.parr{display:flex;align-items:center;color:var(--muted);font-size:11px;padding:0 1px;align-self:center;}
+.empty-pat{color:var(--muted);font-size:12px;padding:24px;text-align:center;}
+
+.screen{background:#000;padding:14px 18px;border-bottom:1px solid var(--border);min-height:78px;}
+.np-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.np-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--goldb);line-height:1;}
+.np-type{font-size:10px;color:var(--dim);margin-top:5px;}
+.fade-tag{display:inline-block;font-size:10px;font-family:'Space Mono',monospace;color:var(--orange);background:rgba(255,109,0,.1);border:1px solid var(--orange);border-radius:2px;padding:1px 7px;vertical-align:middle;opacity:0;transition:opacity .3s;}
+.fade-tag.show{opacity:1;}
+
+.prog-wrap{padding:10px 18px;background:var(--s2);border-bottom:1px solid var(--border);}
+.prog-bar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width .3s linear;}
+.prog-times{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:5px;}
+
+.vol-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.vol-lbl{font-size:9px;color:var(--dim);}
+.vol-meter{width:80px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.vol-meter-fill{height:100%;background:var(--music-ac);border-radius:2px;transition:width .35s ease;}
+.vol-pct{font-size:9px;color:var(--music-ac);width:30px;}
+
+.ctrls{padding:14px 18px;display:flex;align-items:center;gap:10px;}
+.cbtn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--s2);color:var(--dim);cursor:pointer;font-size:13px;transition:all .2s;}
+.cbtn:hover{border-color:var(--gold);color:var(--gold);}
+.cbtn.play{width:46px;height:46px;background:var(--gold);color:#000;border-color:var(--gold);font-size:16px;}
+.cbtn.play:hover{background:var(--goldb);}
+.cbtn.stp:hover{border-color:var(--red);color:var(--red);}
+.ctrl-info{margin-left:auto;font-size:10px;color:var(--dim);text-align:right;line-height:1.7;}
+
+.exp-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.exp-btn{padding:9px 22px;background:var(--gold);color:#000;border:none;border-radius:3px;font-family:'Space Mono',monospace;font-size:11px;font-weight:bold;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.exp-btn:hover{background:var(--goldb);}
+.exp-btn:disabled{background:var(--s3);color:var(--muted);cursor:not-allowed;}
+.exp-note{font-size:10px;color:var(--dim);line-height:1.8;}
+.size-est{font-size:10px;color:var(--orange);margin-top:3px;}
+.exp-prog{margin-top:12px;display:none;}
+.exp-stat{font-size:11px;color:var(--gold);margin-bottom:7px;}
+
+.toast{position:fixed;bottom:22px;right:22px;background:var(--s2);border:1px solid var(--gold);color:var(--text);padding:10px 18px;border-radius:4px;font-size:11px;opacity:0;transform:translateY(8px);transition:all .3s;z-index:999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">SHREEMANT BROADCAST STUDIO</div>
+    <div class="hdr-sub">IN-STORE AUDIO ANNOUNCEMENT SCHEDULER</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="tbtn-wrap" style="font-size:9px;">
+      <button class="tbtn on" id="thDark" onclick="setTheme('dark')" style="padding:4px 10px;font-size:9px;">⬛ DARK</button>
+      <button class="tbtn" id="thLight" onclick="setTheme('light')" style="padding:4px 10px;font-size:9px;">⬜ LIGHT</button>
+    </div>
+    <span class="loop-tag">∞ LOOP</span>
+    <div class="status"><div class="dot" id="dot"></div><span id="statusTxt">STANDBY</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="two-col">
+    <!-- MUSIC -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-num">1</div><div class="card-title">🎵 Music Files</div></div>
+      <div class="card-body">
+        <div class="dropzone">
+          <input type="file" id="musicInput" accept="audio/*" multiple>
+          <div class="dropzone-icon">🎵</div>
+          <div class="dropzone-text">Upload music files — select one to use<br><span style="color:var(--muted);font-size:10px;">MP3 · WAV · OGG</span></div>
+        </div>
+        <div class="flist" id="musicList"></div>
+      </div>
+    </div>
+
+    <!-- ADS -->
+    <div class="card">
+      <div class="card-hdr"><div class="card-num">2</div><div class="card-title">📢 Advertisement Files</div></div>
+      <div class="card-body">
+        <div class="dropzone">
+          <input type="file" id="adInput" accept="audio/*" multiple>
+          <div class="dropzone-icon">📢</div>
+          <div class="dropzone-text">Upload ad files — duration auto-detected<br><span style="color:var(--muted);font-size:10px;">MP3 · WAV · OGG</span></div>
+        </div>
+        <div class="flist" id="adList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-num">3</div><div class="card-title">⚙️ Settings & Mode</div></div>
+    <div class="card-body">
+      <div class="srow">
+        <div class="sgrp">
+          <div class="slabel">🎵 Music Block Duration</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="number" class="sinput" id="musicDur" value="30" min="1" max="3600" style="width:80px;">
+            <div class="tbtn-wrap">
+              <button class="tbtn on" id="uSec" onclick="setUnit('sec')">SEC</button>
+              <button class="tbtn" id="uMin" onclick="setUnit('min')">MIN</button>
+            </div>
+          </div>
+        </div>
+        <div class="sgrp">
+          <div class="slabel">📋 Playback Mode</div>
+          <div class="tbtn-wrap">
+            <button class="tbtn on" id="m1" onclick="setMode('one')">ONE BY ONE</button>
+            <button class="tbtn" id="m2" onclick="setMode('all')">ALL ADS TOGETHER</button>
+          </div>
+        </div>
+        <div class="sgrp" style="align-self:flex-end;">
+          <button class="build-btn" onclick="buildPattern()">BUILD PATTERN →</button>
+        </div>
+      </div>
+
+      <div id="modeDesc" style="margin-top:14px;padding:10px 14px;background:var(--s2);border-radius:3px;border-left:2px solid var(--gold);font-size:10px;color:var(--dim);line-height:1.8;">
+        <strong style="color:var(--goldb);">ONE BY ONE:</strong> Music → Ad 1 → Music → Ad 2 → Music → Ad 3 → … → Loop
+      </div>
+
+      <!-- MUSIC DURING ADS -->
+      <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+        <div class="slabel" style="margin-bottom:10px;">🎚️ Music During Ads</div>
+        <div class="tbtn-wrap">
+          <button class="tbtn on" id="fMute" onclick="setFadeMode('mute')">🔇 MUTE</button>
+          <button class="tbtn" id="fFade" onclick="setFadeMode('fade')">📉 FADE (keep music low)</button>
+        </div>
+
+        <div class="fade-box" id="fadeBox">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:12px;">Music will continue playing at a lower volume during ads — like a real radio broadcast.</div>
+          <div class="fade-row">
+            <div class="range-wrap">
+              <div class="slabel">Fade To Volume</div>
+              <input type="range" id="fadeVol" min="0" max="60" value="15" step="5" oninput="updateFadeLabel()">
+              <div class="range-val" id="fadeVolVal">15%</div>
+              <div class="range-hint">0% = near silent · 60% = clearly audible</div>
+            </div>
+            <div class="range-wrap">
+              <div class="slabel">Crossfade Speed</div>
+              <input type="range" id="fadeDur" min="0.3" max="3" value="1" step="0.1" oninput="updateFadeDurLabel()">
+              <div class="range-val" id="fadeDurVal">1.0 sec</div>
+              <div class="range-hint">How fast the music fades in / out</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATTERN -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-num">4</div>
+      <div class="card-title">📊 Broadcast Pattern</div>
+      <div style="margin-left:auto;font-size:9px;display:flex;gap:14px;align-items:center;">
+        <span style="color:var(--music-ac);">■ MUSIC</span>
+        <span style="color:var(--ad-ac);">■ AD</span>
+        <span id="cycleInfo" style="color:var(--gold);"></span>
+      </div>
+    </div>
+    <div class="card-body" style="padding:14px 18px;">
+      <div class="track-scroll">
+        <div class="track" id="patternTrack">
+          <div class="empty-pat">↑ Upload files & click BUILD PATTERN to see the broadcast schedule</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-num">5</div><div class="card-title">🎛️ Playback Console</div></div>
+    <div class="screen">
+      <div class="np-lbl">NOW PLAYING</div>
+      <div class="np-title" id="npTitle">— STANDBY —</div>
+      <div class="np-type" id="npType">Build pattern and press ▶ to start</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="vol-row" id="volRow" style="display:none;">
+        <span class="vol-lbl">🎵 MUSIC VOL</span>
+        <div class="vol-meter"><div class="vol-meter-fill" id="volFill" style="width:100%;"></div></div>
+        <span class="vol-pct" id="volPct">100%</span>
+        <span class="fade-tag" id="fadeTag">FADED</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      <div class="prog-times">
+        <span id="tElapsed">0:00</span>
+        <span id="blkInfo">—</span>
+        <span id="tRemain">0:00</span>
+      </div>
+    </div>
+    <div class="ctrls">
+      <button class="cbtn play" id="playBtn" onclick="togglePlay()">▶</button>
+      <button class="cbtn stp" onclick="stopAll()" title="Stop">■</button>
+      <button class="cbtn" onclick="skipNext()" title="Skip block">⏭</button>
+      <div class="ctrl-info">
+        <div id="loopCnt">Loop: 0</div>
+        <div id="blkCnt">Block: 0 / 0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="card">
+    <div class="card-hdr"><div class="card-num">6</div><div class="card-title">⬇️ Export Audio</div></div>
+    <div class="card-body">
+      <div class="exp-row">
+        <div class="sgrp">
+          <div class="slabel">Duration</div>
+          <input type="number" class="sinput" id="expMin" value="5" min="1" max="60" style="width:80px;" oninput="updateSizeEst()">
+          <div style="font-size:10px;color:var(--dim);">minutes (max 60)</div>
+          <div class="size-est" id="sizeEst">≈ 50 MB</div>
+        </div>
+        <button class="exp-btn" id="expBtn" onclick="exportAudio()">⬇ DOWNLOAD WAV</button>
+        <div class="exp-note">
+          Renders the full broadcast sequence as WAV<br>
+          <span style="color:var(--muted);">Includes music fade effect if enabled<br>Large files (30+ min) may take 1–2 min to render</span>
+        </div>
+      </div>
+      <div class="exp-prog" id="expProg">
+        <div class="exp-stat" id="expStat">Rendering…</div>
+        <div class="prog-bar"><div class="prog-fill" id="expFill" style="background:var(--goldb);transition:width .4s;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── THEME ──
+function setTheme(t){
+  document.body.classList.toggle('theme-light',t==='light');
+  document.getElementById('thDark').classList.toggle('on',t==='dark');
+  document.getElementById('thLight').classList.toggle('on',t==='light');
+}
+
+// ── STATE ──
+let musicFiles=[], adFiles=[], playMode='one', musicUnit='sec', fadeMode='mute';
+let sequence=[], isPlaying=false, curIdx=0, loopCount=0, musicPos=0;
+let blockTimer=null, progInterval=null, fadeInterval=null, adEndedCb=null;
+
+const mAudio=new Audio(), adAudio=new Audio();
+mAudio.loop=true;
+
+// ── MUSIC UPLOAD ──
+document.getElementById('musicInput').addEventListener('change',function(e){
+  Array.from(e.target.files).forEach(f=>{
+    musicFiles.push({id:uid(),name:f.name,file:f,url:URL.createObjectURL(f),selected:musicFiles.length===0});
+  });
+  renderMusic(); e.target.value='';
+});
+
+function renderMusic(){
+  document.getElementById('musicList').innerHTML=musicFiles.map((m,i)=>`
+    <div class="fitem music-item ${m.selected?'sel':''}" onclick="selMusic(${i})">
+      <input type="radio" class="fradio" name="mSel" ${m.selected?'checked':''} onclick="selMusic(${i});event.stopPropagation()">
+      <span class="fname" title="${esc(m.name)}">${esc(m.name)}</span>
+      ${m.selected?'<span class="ftag">SELECTED</span>':''}
+      <button class="frm" onclick="rmMusic(event,${i})">✕</button>
+    </div>`).join('');
+}
+function selMusic(i){musicFiles.forEach((m,j)=>m.selected=(i===j));renderMusic();}
+function rmMusic(e,i){e.stopPropagation();URL.revokeObjectURL(musicFiles[i].url);musicFiles.splice(i,1);if(musicFiles.length&&!musicFiles.find(m=>m.selected))musicFiles[0].selected=true;renderMusic();}
+
+// ── AD UPLOAD ──
+document.getElementById('adInput').addEventListener('change',function(e){
+  const files=Array.from(e.target.files);let loaded=0;
+  files.forEach(f=>{
+    const entry={id:uid(),name:f.name,file:f,url:URL.createObjectURL(f),duration:0,durationStr:'...'};
+    adFiles.push(entry);
+    const tmp=new Audio(); tmp.src=entry.url;
+    tmp.addEventListener('loadedmetadata',()=>{entry.duration=tmp.duration;entry.durationStr=fmt(tmp.duration);loaded++;if(loaded===files.length)renderAds();});
+    tmp.addEventListener('error',()=>{entry.duration=0;entry.durationStr='?';loaded++;if(loaded===files.length)renderAds();});
+  });
+  renderAds(); e.target.value='';
+});
+
+function renderAds(){
+  document.getElementById('adList').innerHTML=adFiles.map((ad,i)=>`
+    <div class="aditem">
+      <div class="adnum">${i+1}</div>
+      <span class="fname" title="${esc(ad.name)}">${esc(ad.name)}</span>
+      <span class="ad-dur-badge">⏱ ${ad.durationStr||'...'}</span>
+      <button class="frm" onclick="rmAd(${i})">✕</button>
+    </div>`).join('');
+}
+function rmAd(i){URL.revokeObjectURL(adFiles[i].url);adFiles.splice(i,1);renderAds();}
+
+// ── SETTINGS ──
+function setUnit(u){musicUnit=u;document.getElementById('uSec').classList.toggle('on',u==='sec');document.getElementById('uMin').classList.toggle('on',u==='min');}
+function getMusicDurSec(){const v=parseFloat(document.getElementById('musicDur').value)||30;return musicUnit==='min'?v*60:v;}
+function setMode(m){playMode=m;document.getElementById('m1').classList.toggle('on',m==='one');document.getElementById('m2').classList.toggle('on',m==='all');
+  document.getElementById('modeDesc').innerHTML=m==='one'
+    ?'<strong style="color:var(--goldb);">ONE BY ONE:</strong> Music → Ad 1 → Music → Ad 2 → … → Loop'
+    :'<strong style="color:var(--goldb);">ALL ADS TOGETHER:</strong> Music → Ad 1 → Ad 2 → Ad 3 → Music → Ad 1 → … → Loop';}
+
+function setFadeMode(m){
+  fadeMode=m;
+  document.getElementById('fMute').classList.toggle('on',m==='mute');
+  document.getElementById('fFade').classList.toggle('on',m==='fade');
+  document.getElementById('fadeBox').classList.toggle('show',m==='fade');
+  document.getElementById('volRow').style.display=m==='fade'?'flex':'none';
+}
+function updateFadeLabel(){document.getElementById('fadeVolVal').textContent=document.getElementById('fadeVol').value+'%';}
+function updateFadeDurLabel(){document.getElementById('fadeDurVal').textContent=parseFloat(document.getElementById('fadeDur').value).toFixed(1)+' sec';}
+function getFadeVol(){return parseInt(document.getElementById('fadeVol').value)/100;}
+function getFadeDur(){return parseFloat(document.getElementById('fadeDur').value);}
+
+function updateSizeEst(){const m=parseInt(document.getElementById('expMin').value)||5;document.getElementById('sizeEst').textContent='≈ '+Math.round(m*60*44100*2*2/1048576)+' MB';}
+updateSizeEst();
+
+// ── BUILD SEQUENCE ──
+function makeSequence(){
+  const sel=musicFiles.find(m=>m.selected);
+  if(!sel||!adFiles.length)return[];
+  const dur=getMusicDurSec(), seq=[];
+  if(playMode==='one'){
+    adFiles.forEach((ad,i)=>{
+      seq.push({type:'music',dur,url:sel.url,name:sel.name});
+      seq.push({type:'ad',dur:ad.duration||0,url:ad.url,name:ad.name,num:i+1});
+    });
+  } else {
+    seq.push({type:'music',dur,url:sel.url,name:sel.name});
+    adFiles.forEach((ad,i)=>seq.push({type:'ad',dur:ad.duration||0,url:ad.url,name:ad.name,num:i+1}));
+  }
+  return seq;
+}
+
+function buildPattern(){
+  if(!musicFiles.find(m=>m.selected)){toast('⚠️ Select a music file first');return;}
+  if(!adFiles.length){toast('⚠️ Upload at least one ad file');return;}
+  sequence=makeSequence(); renderPattern(); toast('✅ Pattern built!');
+}
+
+function renderPattern(){
+  const track=document.getElementById('patternTrack');
+  if(!sequence.length){track.innerHTML='<div class="empty-pat">No pattern yet</div>';return;}
+  const total=sequence.reduce((s,b)=>s+b.dur,0);
+  document.getElementById('cycleInfo').textContent='1 CYCLE = '+fmt(total);
+  track.innerHTML=sequence.map((b,i)=>{
+    const w=Math.max(70,Math.min(180,b.dur*2.5)),sn=noExt(b.name).substring(0,12),isLast=i===sequence.length-1;
+    if(b.type==='music')return`<div class="pblock music-b" id="pb${i}" style="width:${w}px"><div class="bl-label">🎵 MUSIC</div><div class="bl-dur">${fmt(b.dur)}</div><div class="bl-name">${sn}</div></div><div class="parr">→</div>`;
+    return`<div class="pblock ad-b" id="pb${i}" style="width:${w}px"><div class="bl-label">📢 AD ${b.num}</div><div class="bl-dur">${fmt(b.dur)}</div><div class="bl-name">${sn}</div></div><div class="parr">${isLast?'↺':'→'}</div>`;
+  }).join('');
+}
+
+// ── PLAYBACK ──
+function togglePlay(){if(isPlaying)pauseAll();else startPlay();}
+
+function startPlay(){
+  if(!sequence.length){buildPattern();if(!sequence.length)return;}
+  isPlaying=true;setStatus('ON AIR',true);
+  document.getElementById('playBtn').textContent='⏸';
+  playBlock(curIdx);
+}
+
+function pauseAll(){
+  isPlaying=false;
+  clearTimeout(blockTimer);clearInterval(progInterval);clearInterval(fadeInterval);
+  if(adEndedCb){adAudio.removeEventListener('ended',adEndedCb);adEndedCb=null;}
+  musicPos=mAudio.currentTime;
+  mAudio.pause();adAudio.pause();mAudio.volume=1;
+  document.getElementById('playBtn').textContent='▶';
+  setStatus('PAUSED',false);
+}
+
+function stopAll(){
+  isPlaying=false;
+  clearTimeout(blockTimer);clearInterval(progInterval);clearInterval(fadeInterval);
+  if(adEndedCb){adAudio.removeEventListener('ended',adEndedCb);adEndedCb=null;}
+  mAudio.pause();mAudio.currentTime=0;mAudio.volume=1;
+  adAudio.pause();adAudio.currentTime=0;
+  musicPos=0;curIdx=0;loopCount=0;
+  document.getElementById('playBtn').textContent='▶';
+  document.getElementById('progFill').style.width='0%';
+  document.getElementById('npTitle').textContent='— STANDBY —';
+  document.getElementById('npType').textContent='Press ▶ to start';
+  document.getElementById('tElapsed').textContent='0:00';
+  document.getElementById('tRemain').textContent='0:00';
+  document.getElementById('blkInfo').textContent='—';
+  document.getElementById('loopCnt').textContent='Loop: 0';
+  document.getElementById('blkCnt').textContent='Block: 0 / 0';
+  setVol(1);clearActive();setStatus('STANDBY',false);
+}
+
+function skipNext(){
+  clearTimeout(blockTimer);clearInterval(progInterval);clearInterval(fadeInterval);
+  if(adEndedCb){adAudio.removeEventListener('ended',adEndedCb);adEndedCb=null;}
+  musicPos=mAudio.currentTime;mAudio.pause();adAudio.pause();mAudio.volume=1;
+  curIdx=(curIdx+1)%sequence.length;
+  if(curIdx===0)loopCount++;
+  if(isPlaying)playBlock(curIdx);
+}
+
+function playBlock(idx){
+  if(!isPlaying)return;
+  curIdx=idx;const b=sequence[idx];
+  clearActive();
+  const el=document.getElementById('pb'+idx);
+  if(el){el.classList.add('active-b');el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}
+  document.getElementById('loopCnt').textContent='Loop: '+(loopCount+1);
+  document.getElementById('blkCnt').textContent='Block: '+(idx+1)+' / '+sequence.length;
+
+  if(b.type==='music'){
+    document.getElementById('npTitle').textContent=noExt(b.name);
+    document.getElementById('npType').textContent='🎵 MUSIC BLOCK — '+fmt(b.dur);
+    document.getElementById('fadeTag').classList.remove('show');
+    adAudio.pause();
+    if(mAudio.src!==b.url)mAudio.src=b.url;
+    mAudio.currentTime=musicPos;
+    // Fade back up if needed
+    if(fadeMode==='fade'){
+      mAudio.volume=mAudio.volume; // keep current (could be faded)
+      mAudio.play().catch(()=>{});
+      fadeVolume(1,getFadeDur());
+    } else {
+      mAudio.volume=1;mAudio.play().catch(()=>{});
+    }
+    setVol(1);
+    startProg(b.dur);
+    blockTimer=setTimeout(()=>{musicPos=mAudio.currentTime;mAudio.pause();advance();},b.dur*1000);
+
+  } else {
+    document.getElementById('npTitle').textContent='AD '+b.num+': '+noExt(b.name);
+    document.getElementById('npType').textContent='📢 ADVERTISEMENT — '+fmt(b.dur);
+
+    if(fadeMode==='mute'){
+      musicPos=mAudio.currentTime;mAudio.pause();mAudio.volume=1;
+      document.getElementById('fadeTag').classList.remove('show');
+      setVol(0);
+    } else {
+      // FADE: music keeps playing quietly
+      document.getElementById('fadeTag').classList.add('show');
+      mAudio.play().catch(()=>{});
+      fadeVolume(getFadeVol(),getFadeDur());
+    }
+
+    adAudio.src=b.url;adAudio.currentTime=0;adAudio.play().catch(()=>{});
+    const dur=b.dur>0?b.dur:30;
+    startProg(dur);
+    adEndedCb=()=>{clearTimeout(blockTimer);adAudio.removeEventListener('ended',adEndedCb);adEndedCb=null;advance();};
+    adAudio.addEventListener('ended',adEndedCb);
+    blockTimer=setTimeout(()=>{if(adEndedCb){adAudio.removeEventListener('ended',adEndedCb);adEndedCb=null;}adAudio.pause();advance();},dur*1000+500);
+  }
+}
+
+function advance(){
+  if(!isPlaying)return;clearInterval(progInterval);
+  const next=(curIdx+1)%sequence.length;
+  if(next===0)loopCount++;
+  playBlock(next);
+}
+
+function startProg(dur){
+  clearInterval(progInterval);const start=Date.now();
+  document.getElementById('blkInfo').textContent='Block '+(curIdx+1)+'/'+sequence.length;
+  progInterval=setInterval(()=>{
+    const el=(Date.now()-start)/1000,pct=Math.min(100,(el/dur)*100);
+    document.getElementById('progFill').style.width=pct+'%';
+    document.getElementById('tElapsed').textContent=fmt(Math.floor(el));
+    document.getElementById('tRemain').textContent=fmt(Math.max(0,Math.floor(dur-el)));
+  },200);
+}
+
+// ── FADE ──
+function fadeVolume(target,durSec){
+  clearInterval(fadeInterval);
+  const start=mAudio.volume,steps=Math.max(10,Math.floor(durSec*30)),stepMs=(durSec*1000)/steps;
+  let i=0;
+  fadeInterval=setInterval(()=>{
+    i++;const v=start+(target-start)*(i/steps);
+    mAudio.volume=Math.max(0,Math.min(1,v));setVol(mAudio.volume);
+    if(i>=steps){clearInterval(fadeInterval);mAudio.volume=target;setVol(target);}
+  },stepMs);
+}
+
+function setVol(v){
+  document.getElementById('volFill').style.width=(v*100)+'%';
+  document.getElementById('volPct').textContent=Math.round(v*100)+'%';
+}
+
+function clearActive(){document.querySelectorAll('.pblock.active-b').forEach(e=>e.classList.remove('active-b'));}
+function setStatus(t,on){document.getElementById('statusTxt').textContent=t;document.getElementById('dot').classList.toggle('on',on);}
+
+// ── EXPORT ──
+async function exportAudio(){
+  if(!sequence.length){toast('⚠️ Build pattern first');return;}
+  const mins=Math.min(60,Math.max(1,parseInt(document.getElementById('expMin').value)||5));
+  const totalSec=mins*60;
+  const btn=document.getElementById('expBtn');btn.disabled=true;
+  const pd=document.getElementById('expProg');pd.style.display='block';
+  const setStat=(t,p)=>{document.getElementById('expStat').textContent=t;document.getElementById('expFill').style.width=p+'%';};
+
+  try{
+    const SR=44100;
+    const offCtx=new OfflineAudioContext(2,SR*totalSec,SR);
+    setStat('Decoding music…',5);
+    const sel=musicFiles.find(m=>m.selected);
+    const mBuf=await decFile(offCtx,sel.file);
+    const aBufs=[];
+    for(let i=0;i<adFiles.length;i++){
+      aBufs.push(await decFile(offCtx,adFiles[i].file));
+      setStat('Decoding ad '+(i+1)+'/'+adFiles.length+'…',5+(i+1)/adFiles.length*20);
+    }
+
+    setStat('Scheduling…',25);
+    const mGain=offCtx.createGain();mGain.connect(offCtx.destination);
+    const aGain=offCtx.createGain();aGain.gain.value=1;aGain.connect(offCtx.destination);
+
+    let t=0,mOff=0,si=0;
+    const fvol=getFadeVol(),fdur=getFadeDur();
+
+    while(t<totalSec){
+      const b=sequence[si%sequence.length];
+      const dur=Math.min(b.dur>0?b.dur:30,totalSec-t);
+
+      if(b.type==='music'){
+        schedSeg(offCtx,mBuf,mGain,t,dur,mOff);
+        mOff=(mOff+dur)%mBuf.duration;
+        if(fadeMode==='fade'&&si>0){
+          mGain.gain.setValueAtTime(fvol,t);
+          mGain.gain.linearRampToValueAtTime(1.0,t+Math.min(fdur,dur));
+        } else {
+          mGain.gain.setValueAtTime(1,t);
+        }
+      } else {
+        if(fadeMode==='fade'){
+          mGain.gain.setValueAtTime(1,t);
+          mGain.gain.linearRampToValueAtTime(fvol,t+Math.min(fdur,dur));
+          schedSeg(offCtx,mBuf,mGain,t,dur,mOff);
+          mOff=(mOff+dur)%mBuf.duration;
+        } else {
+          mGain.gain.setValueAtTime(0,t);
+        }
+        if(aBufs[b.num-1])schedSeg(offCtx,aBufs[b.num-1],aGain,t,dur,0);
+      }
+
+      t+=dur;si++;
+      if(si%5===0)setStat('Scheduling: '+fmt(Math.floor(t))+' / '+fmt(totalSec),25+(t/totalSec)*45);
+    }
+
+    setStat('Rendering '+mins+' min… (please wait)',70);
+    const rendered=await offCtx.startRendering();
+    setStat('Encoding WAV…',92);
+    const blob=bufToWav(rendered);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='shreemant-broadcast-'+mins+'min.wav';a.click();
+    URL.revokeObjectURL(url);
+    setStat('✅ Download started!',100);
+    toast('✅ Exported successfully!');
+  }catch(err){
+    setStat('❌ '+err.message,0);toast('❌ Export failed');console.error(err);
+  }
+  btn.disabled=false;setTimeout(()=>{pd.style.display='none';},5000);
+}
+
+function schedSeg(ctx,buf,dest,startT,dur,srcOff){
+  if(!buf||dur<=0)return;
+  const wrap=srcOff%buf.duration,rem=buf.duration-wrap;
+  if(rem>=dur){const s=ctx.createBufferSource();s.buffer=buf;s.connect(dest);s.start(startT,wrap,dur);}
+  else{const s=ctx.createBufferSource();s.buffer=buf;s.connect(dest);s.start(startT,wrap,rem);schedSeg(ctx,buf,dest,startT+rem,dur-rem,0);}
+}
+
+async function decFile(ctx,file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=async e=>{try{res(await ctx.decodeAudioData(e.target.result));}catch(err){rej(err);}};
+    r.onerror=rej;r.readAsArrayBuffer(file);
+  });
+}
+
+function bufToWav(buf){
+  const nc=buf.numberOfChannels,sr=buf.sampleRate,len=buf.length,ba=2,dl=len*nc*ba;
+  const ab=new ArrayBuffer(44+dl),v=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+dl,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,nc,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*nc*ba,true);
+  v.setUint16(32,nc*ba,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,dl,true);
+  let off=44;
+  for(let i=0;i<len;i++)for(let c=0;c<nc;c++){
+    const s=Math.max(-1,Math.min(1,buf.getChannelData(c)[i]));
+    v.setInt16(off,s<0?s*32768:s*32767,true);off+=2;
+  }
+  return new Blob([ab],{type:'audio/wav'});
+}
+
+// ── UTILS ──
+function fmt(s){const m=Math.floor(s/60);return`${m}:${Math.floor(s%60).toString().padStart(2,'0')}`;}
+function noExt(n){return n.replace(/\.[^.]+$/,'');}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function uid(){return Date.now()+Math.random();}
+let toastTimer=null;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000);}
+</script>
+</body>
+</html>
