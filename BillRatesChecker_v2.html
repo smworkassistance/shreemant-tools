@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Bill Rates Checker — Shreemant</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -217,7 +220,7 @@ tr:hover td { background: #fafaf8; }
     <div>
       <div style="display:flex;align-items:center;gap:10px">
         <h1>💰 Bill Rates Checker</h1>
-        <span class="badge">Shreemant</span>
+        <span class="badge">Shreemant</span><span class="badge" style="background:#4f46e5">v3</span>
       </div>
       <div class="sub" id="dataInfo">196 parties · 20,292 records · Oct 2025 – Mar 2026</div>
     </div>
@@ -228,6 +231,7 @@ tr:hover td { background: #fafaf8; }
       📂 Upload New Excel File
     </button>
     <span class="upload-status" id="uploadStatus"></span>
+    <button class="upload-btn" onclick="wipeData()" style="border-color:#dc2626;color:#dc2626" title="Saara loaded data clear kar do">🗑️ Wipe Data</button>
   </div>
 </div>
 
@@ -319,24 +323,27 @@ function rebuildFromData(df_rows) {
     const date  = row['Bill Date'];
     const cost  = parseNum(row['Net Cost/pc']);
     const mrp   = parseNum(row['Item MRP']);
+    const spKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'sales price') || '';
+    const sp    = parseNum(spKey ? row[spKey] : 0);
     const qty   = parseNum(row['Qty']);
     if (!party || !item || !date) return;
 
     if (!bills[party]) bills[party] = {};
     if (!bills[party][date]) bills[party][date] = [];
-    bills[party][date].push({i: item, q: +qty.toFixed(2), m: +mrp.toFixed(2), c: +cost.toFixed(2)});
+    bills[party][date].push({i: item, q: +qty.toFixed(2), m: +mrp.toFixed(2), s: +sp.toFixed(2), c: +cost.toFixed(2)});
 
     const key = party + '|||' + item;
     if (!hist[key]) hist[key] = [];
-    hist[key].push({d: date, c: +cost.toFixed(2), m: +mrp.toFixed(2)});
+    hist[key].push({d: date, c: +cost.toFixed(2), m: +mrp.toFixed(2), s: +sp.toFixed(2)});
 
     if (!item_hist[item]) item_hist[item] = [];
-    item_hist[item].push({d: date, p: party, c: +cost.toFixed(2), m: +mrp.toFixed(2)});
+    item_hist[item].push({d: date, p: party, c: +cost.toFixed(2), m: +mrp.toFixed(2), s: +sp.toFixed(2)});
   });
 
   // Sort
-  for (const k in hist) hist[k].sort((a,b)=>a.d.localeCompare(b.d));
-  for (const k in item_hist) item_hist[k].sort((a,b)=>b.d.localeCompare(a.d));
+  const toISO = d => { const [dd,mm,yyyy] = d.split('-'); return `${yyyy}-${mm}-${dd}`; };
+  for (const k in hist) hist[k].sort((a,b)=>toISO(a.d).localeCompare(toISO(b.d)));
+  for (const k in item_hist) item_hist[k].sort((a,b)=>toISO(b.d).localeCompare(toISO(a.d)));
 
   // Cross best
   const ipc = {};
@@ -507,7 +514,7 @@ function checkBill() {
     const hasHistory = histAvg !== null && it.c > 0;
     const delta = hasHistory ? ((it.c - histAvg)/histAvg*100) : null;
     const verdict = getVerdict(delta, hasHistory);
-    return { item: it.i, qty: it.q, mrp: it.m, cost: it.c,
+    return { item: it.i, qty: it.q, mrp: it.m, salesPrice: it.s, cost: it.c,
              histMin, histAvg, histMax, histCount, lastDate,
              cross, delta, verdict, party };
   });
@@ -548,7 +555,7 @@ function renderBillTable() {
   };
 
   let html = `<table><thead><tr>
-    <th>Item Name</th><th>Qty</th><th>MRP ₹</th><th>Cost/pc ₹</th>
+    <th>Item Name</th><th>Qty</th><th>MRP ₹</th><th>Sales Price ₹</th><th>Cost/pc ₹</th>
     <th>⬇ Hist Min</th><th>~ Hist Avg</th><th>⬆ Hist Max</th>
     <th>Δ vs Avg</th><th>#</th><th>Last Bought</th>
     <th>Best Rate Party</th><th>Verdict</th>
@@ -568,6 +575,7 @@ function renderBillTable() {
       <td class="item-name">${r.item}</td>
       <td class="num">${r.qty||'—'}</td>
       <td class="num">${r.mrp>0?'₹'+r.mrp.toFixed(2):'—'}</td>
+      <td class="num">${r.salesPrice>0?'₹'+r.salesPrice.toFixed(2):'—'}</td>
       <td class="num">${r.cost>0?'₹'+r.cost.toFixed(2):'—'}</td>
       <td class="num">${fc(r.histMin)}</td>
       <td class="num">${fc(r.histAvg ? Math.round(r.histAvg*100)/100 : null)}</td>
@@ -593,6 +601,23 @@ function setSort(s) {
   document.getElementById('sortAZ').classList.toggle('active', s==='az');
   if (currentRows.length) renderBillTable();
 }
+function wipeData() {
+  if (!confirm('Saara loaded data wipe ho jayega. Sure ho?')) return;
+  RAW = {bills:{}, hist:{}, cross:{}, pd:{}, ih:{}, items:[]};
+  LOADED = false;
+  currentRows = []; currentSort = 'expensive';
+  allItems = []; filteredItems = []; selectedItem = null;
+  document.getElementById('partySelect').innerHTML = '<option value="">— Select Party —</option>';
+  document.getElementById('dateSelect').innerHTML = '<option value="">— Select Date —</option>';
+  document.getElementById('dataInfo').textContent = 'No data loaded';
+  document.getElementById('sidebarList').innerHTML = '';
+  document.getElementById('itemDetail').innerHTML = '<div class="empty"><div class="icon">📦</div><div>Koi bhi item select karo — us item ki full purchase history dikhegi (party-wise)</div></div>';
+  document.getElementById('uploadBtn').className = 'upload-btn';
+  document.getElementById('uploadBtn').textContent = '📂 Upload New Excel File';
+  document.getElementById('uploadStatus').textContent = '';
+  clearBill();
+}
+
 function clearBill() {
   currentRows = [];
   document.getElementById('resultWrap').style.display = 'none';
@@ -694,10 +719,11 @@ function selectItem(item) {
   </div>`;
 
   html += `<table><thead><tr>
-    <th>📅 Date</th><th>🏢 Party Name</th><th>MRP ₹</th><th>Cost/pc ₹</th><th>Margin %</th><th>vs Prev</th>
+    <th>📅 Date</th><th>🏢 Party Name</th><th>MRP ₹</th><th>Sales Price ₹</th><th>Cost/pc ₹</th><th>Margin %</th><th>vs Prev</th>
   </tr></thead><tbody>`;
 
-  // Sort by date desc — already sorted
+  const toISO = d => { const [dd,mm,yyyy] = d.split('-'); return `${yyyy}-${mm}-${dd}`; };
+  records.sort((a, b) => toISO(b.d).localeCompare(toISO(a.d)));
   let prevCost = null;
   records.forEach(r => {
     const margin = r.m>0 && r.c>0 ? ((r.m-r.c)/r.m*100) : null;
@@ -714,9 +740,10 @@ function selectItem(item) {
     if (r.c > 0) prevCost = r.c;
 
     html += `<tr>
-      <td style="font-size:12px;color:#666">${r.d}</td>
+      <td style="font-size:12px;color:#666">${r.d.replace(/-/g,'/')}</td>
       <td><span class="party-tag">🏢 ${r.p}</span></td>
       <td class="num">${r.m>0?'₹'+r.m.toFixed(2):'<span class="dim">—</span>'}</td>
+      <td class="num">${r.s>0?'₹'+r.s.toFixed(2):'<span class="dim">—</span>'}</td>
       <td class="num"><b>${r.c>0?'₹'+r.c.toFixed(2):'<span class="dim">—</span>'}</b></td>
       <td class="num">${margin!==null?`${marginEmoji} ${margin.toFixed(1)}%`:'<span class="dim">—</span>'}</td>
       <td>${vsPrev}</td>
